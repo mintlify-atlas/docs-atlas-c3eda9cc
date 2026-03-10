@@ -1,0 +1,737 @@
+---
+title: 'Calendar View Component'
+description: 'Weekly calendar grid showing appointments by day and time'
+---
+
+## Overview
+
+The `Calendar` component provides a weekly calendar view that displays appointments in a time-grid format. Users can navigate between weeks, view appointments positioned by their scheduled time, and create new appointments by clicking on available time slots.
+
+## Component Definition
+
+<ParamField path="selector" type="string" default="app-calendar">
+  The CSS selector used to include this component in templates
+</ParamField>
+
+<ParamField path="standalone" type="boolean" default={true}>
+  Standalone component with explicit imports
+</ParamField>
+
+<ParamField path="imports" type="array">
+  Dependencies: `CommonModule`, `NewAppointment`
+</ParamField>
+
+## Source Code Location
+
+**File**: `src/app/calendar/calendar.ts:13`
+
+<CodeGroup>
+
+```typescript calendar.ts
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { AppointmentService, AppointmentData } from '../services/appointment.service';
+import { NewAppointment } from '../new-appointment/new-appointment';
+
+interface CalendarDay {
+  date: Date;
+  isCurrentMonth: boolean;
+  isToday: boolean;
+  appointments: AppointmentData[];
+}
+
+@Component({
+  selector: 'app-calendar',
+  standalone: true,
+  imports: [CommonModule, NewAppointment],
+  templateUrl: './calendar.html',
+  styleUrl: './calendar.css',
+})
+export class Calendar implements OnInit {
+  currentDate: Date = new Date();
+  days: CalendarDay[] = [];
+  weekDays: string[] = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  showNewAppointmentModal: boolean = false;
+  selectedDateForNewAppointment: string = '';
+  hours: string[] = [
+    '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
+    '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
+  ];
+
+  constructor(private appointmentService: AppointmentService) { }
+
+  ngOnInit(): void {
+    this.generateCalendar();
+  }
+
+  generateCalendar(): void {
+    const year = this.currentDate.getFullYear();
+    const month = this.currentDate.getMonth();
+    const day = this.currentDate.getDate();
+
+    const dateCopy = new Date(year, month, day);
+    let dayOfWeek = dateCopy.getDay();
+    // Adjust to Monday start (0=Sun, 1=Mon...6=Sat)
+    let diff = dateCopy.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+    const startOfWeek = new Date(dateCopy.setDate(diff));
+
+    this.days = [];
+    const allAppointments = this.appointmentService.getAppointments();
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(
+        startOfWeek.getFullYear(), 
+        startOfWeek.getMonth(), 
+        startOfWeek.getDate() + i
+      );
+      const isToday = this.isSameDay(date, new Date());
+      const dayAppointments = allAppointments.filter(app => 
+        this.isAppointmentOnDay(app, date)
+      );
+
+      this.days.push({
+        date,
+        isCurrentMonth: true,
+        isToday,
+        appointments: dayAppointments
+      });
+    }
+  }
+
+  isAppointmentOnDay(app: AppointmentData, date: Date): boolean {
+    if (!app.fecha) return false;
+
+    // Handle YYYY-MM-DD format
+    if (app.fecha.includes('-')) {
+      const [y, m, d] = app.fecha.split('-').map(Number);
+      return d === date.getDate() && 
+             (m - 1) === date.getMonth() && 
+             y === date.getFullYear();
+    }
+
+    // Handle D/M/YYYY format
+    if (app.fecha.includes('/')) {
+      const [d, m, y] = app.fecha.split('/').map(Number);
+      return d === date.getDate() && 
+             (m - 1) === date.getMonth() && 
+             y === date.getFullYear();
+    }
+
+    return false;
+  }
+
+  isSameDay(date1: Date, date2: Date): boolean {
+    return date1.getDate() === date2.getDate() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getFullYear() === date2.getFullYear();
+  }
+
+  prevWeek(): void {
+    this.currentDate.setDate(this.currentDate.getDate() - 7);
+    this.generateCalendar();
+  }
+
+  nextWeek(): void {
+    this.currentDate.setDate(this.currentDate.getDate() + 7);
+    this.generateCalendar();
+  }
+
+  getWeekRange(): string {
+    const start = this.days[0]?.date;
+    const end = this.days[6]?.date;
+    if (!start || !end) return '';
+
+    const formatMonth = new Intl.DateTimeFormat('es-ES', { month: 'short' });
+    const formatYear = new Intl.DateTimeFormat('es-ES', { year: 'numeric' });
+
+    if (start.getMonth() === end.getMonth()) {
+      return `${start.getDate()} - ${end.getDate()} ${formatMonth.format(start)} ${start.getFullYear()}`;
+    }
+    return `${start.getDate()} ${formatMonth.format(start)} - ${end.getDate()} ${formatMonth.format(end)} ${start.getFullYear()}`;
+  }
+
+  getMonthName(): string {
+    return this.getWeekRange();
+  }
+
+  openNewAppointment(date?: Date): void {
+    if (date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      this.selectedDateForNewAppointment = `${y}-${m}-${d}`;
+    } else {
+      this.selectedDateForNewAppointment = '';
+    }
+    this.showNewAppointmentModal = true;
+  }
+
+  closeNewAppointment(): void {
+    this.showNewAppointmentModal = false;
+  }
+
+  onAppointmentCreated(): void {
+    this.generateCalendar();
+    this.closeNewAppointment();
+  }
+
+  getAppointmentTop(time: string): string {
+    const [hours, minutes] = time.split(':').map(Number);
+    const startHour = 8;
+    const hourHeight = 60; // Should match row height in CSS
+    const top = (hours - startHour) * hourHeight + (minutes / 60) * hourHeight;
+    return `${top}px`;
+  }
+}
+```
+
+</CodeGroup>
+
+## Interfaces
+
+### CalendarDay
+
+<ParamField path="CalendarDay" type="interface">
+  Represents a single day in the calendar view
+</ParamField>
+
+<CodeGroup>
+
+```typescript CalendarDay Interface
+interface CalendarDay {
+  date: Date;
+  isCurrentMonth: boolean;
+  isToday: boolean;
+  appointments: AppointmentData[];
+}
+```
+
+</CodeGroup>
+
+**Properties**:
+
+<ResponseField name="date" type="Date">
+  The date object for this calendar day
+</ResponseField>
+
+<ResponseField name="isCurrentMonth" type="boolean">
+  Whether this day belongs to the current month (always true for weekly view)
+</ResponseField>
+
+<ResponseField name="isToday" type="boolean">
+  Whether this day is today's date
+</ResponseField>
+
+<ResponseField name="appointments" type="AppointmentData[]">
+  Array of appointments scheduled for this day
+</ResponseField>
+
+## Properties
+
+### currentDate
+
+<ParamField path="currentDate" type="Date" default="new Date()">
+  The reference date for the current week being displayed
+</ParamField>
+
+**Implementation**: `src/app/calendar/calendar.ts:21`
+
+### days
+
+<ParamField path="days" type="CalendarDay[]" default="[]">
+  Array of 7 days representing the current week
+</ParamField>
+
+**Implementation**: `src/app/calendar/calendar.ts:22`
+
+### weekDays
+
+<ParamField path="weekDays" type="string[]">
+  Array of abbreviated weekday names in Spanish
+</ParamField>
+
+```typescript
+weekDays: string[] = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+```
+
+**Implementation**: `src/app/calendar/calendar.ts:23`
+
+### showNewAppointmentModal
+
+<ParamField path="showNewAppointmentModal" type="boolean" default={false}>
+  Controls the visibility of the new appointment modal
+</ParamField>
+
+**Implementation**: `src/app/calendar/calendar.ts:24`
+
+### selectedDateForNewAppointment
+
+<ParamField path="selectedDateForNewAppointment" type="string" default="''">
+  The date selected when creating a new appointment (YYYY-MM-DD format)
+</ParamField>
+
+**Implementation**: `src/app/calendar/calendar.ts:25`
+
+### hours
+
+<ParamField path="hours" type="string[]">
+  Array of hour labels for the time axis (8:00 AM to 8:00 PM)
+</ParamField>
+
+```typescript
+hours: string[] = [
+  '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
+  '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
+];
+```
+
+**Implementation**: `src/app/calendar/calendar.ts:26-29`
+
+## Methods
+
+### ngOnInit()
+
+<ParamField path="ngOnInit" type="() => void">
+  Lifecycle hook that generates the calendar on component initialization
+</ParamField>
+
+**Implementation**: `src/app/calendar/calendar.ts:33-35`
+
+### generateCalendar()
+
+<ParamField path="generateCalendar" type="() => void">
+  Generates the calendar grid for the current week with appointments
+</ParamField>
+
+This method:
+1. Calculates the Monday of the current week
+2. Creates 7 `CalendarDay` objects (Monday through Sunday)
+3. Filters appointments for each day
+4. Marks today's date
+
+**Implementation**: `src/app/calendar/calendar.ts:37-70`
+
+<CodeGroup>
+
+```typescript Week Calculation
+const dateCopy = new Date(year, month, day);
+let dayOfWeek = dateCopy.getDay();
+// Adjust to Monday start (0=Sun, 1=Mon...6=Sat)
+let diff = dateCopy.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+const startOfWeek = new Date(dateCopy.setDate(diff));
+```
+
+</CodeGroup>
+
+### isAppointmentOnDay()
+
+<ParamField path="isAppointmentOnDay" type="(app: AppointmentData, date: Date) => boolean">
+  Checks if an appointment is scheduled for a specific date
+</ParamField>
+
+Handles two date formats:
+- **YYYY-MM-DD**: ISO format
+- **D/M/YYYY**: European format
+
+**Implementation**: `src/app/calendar/calendar.ts:72-93`
+
+### isSameDay()
+
+<ParamField path="isSameDay" type="(date1: Date, date2: Date) => boolean">
+  Compares two dates to check if they are the same day
+</ParamField>
+
+**Implementation**: `src/app/calendar/calendar.ts:95-99`
+
+### prevWeek()
+
+<ParamField path="prevWeek" type="() => void">
+  Navigates to the previous week
+</ParamField>
+
+```typescript
+prevWeek(): void {
+  this.currentDate.setDate(this.currentDate.getDate() - 7);
+  this.generateCalendar();
+}
+```
+
+**Implementation**: `src/app/calendar/calendar.ts:101-104`
+
+### nextWeek()
+
+<ParamField path="nextWeek" type="() => void">
+  Navigates to the next week
+</ParamField>
+
+```typescript
+nextWeek(): void {
+  this.currentDate.setDate(this.currentDate.getDate() + 7);
+  this.generateCalendar();
+}
+```
+
+**Implementation**: `src/app/calendar/calendar.ts:106-109`
+
+### getWeekRange()
+
+<ParamField path="getWeekRange" type="() => string">
+  Returns a formatted string representing the date range of the current week
+</ParamField>
+
+Examples:
+- "1 - 7 mar 2026" (same month)
+- "29 feb - 6 mar 2026" (spanning months)
+
+**Implementation**: `src/app/calendar/calendar.ts:111-123`
+
+### getMonthName()
+
+<ParamField path="getMonthName" type="() => string">
+  Alias for getWeekRange() used in the template
+</ParamField>
+
+**Implementation**: `src/app/calendar/calendar.ts:125-127`
+
+### openNewAppointment()
+
+<ParamField path="openNewAppointment" type="(date?: Date) => void">
+  Opens the new appointment modal, optionally pre-filling a date
+</ParamField>
+
+If a date is provided, it's formatted as YYYY-MM-DD for the date input.
+
+**Implementation**: `src/app/calendar/calendar.ts:129-140`
+
+### closeNewAppointment()
+
+<ParamField path="closeNewAppointment" type="() => void">
+  Closes the new appointment modal
+</ParamField>
+
+**Implementation**: `src/app/calendar/calendar.ts:142-144`
+
+### onAppointmentCreated()
+
+<ParamField path="onAppointmentCreated" type="() => void">
+  Event handler called when a new appointment is created
+</ParamField>
+
+Regenerates the calendar and closes the modal.
+
+**Implementation**: `src/app/calendar/calendar.ts:146-149`
+
+### getAppointmentTop()
+
+<ParamField path="getAppointmentTop" type="(time: string) => string">
+  Calculates the top position (in pixels) for an appointment based on its time
+</ParamField>
+
+Converts appointment time to a pixel offset from the start of the day (8:00 AM).
+
+**Implementation**: `src/app/calendar/calendar.ts:151-157`
+
+<CodeGroup>
+
+```typescript Position Calculation
+getAppointmentTop(time: string): string {
+  const [hours, minutes] = time.split(':').map(Number);
+  const startHour = 8;
+  const hourHeight = 60; // Should match row height in CSS
+  const top = (hours - startHour) * hourHeight + (minutes / 60) * hourHeight;
+  return `${top}px`;
+}
+```
+
+</CodeGroup>
+
+## Template Structure
+
+The calendar template consists of several key sections:
+
+### Header
+
+<ResponseField name="calendar-header" type="header">
+  - **Title**: "Calendario"
+  - **Week range**: Formatted date range (e.g., "1 - 7 mar 2026")
+  - **Navigation buttons**: Previous/Next week buttons
+  - **Nueva Cita button**: Opens new appointment modal
+</ResponseField>
+
+### Timetable Container
+
+The main calendar grid has two columns:
+
+#### Time Axis
+
+<ResponseField name="time-axis" type="div">
+  Vertical list of hour labels from 08:00 to 20:00
+</ResponseField>
+
+```html
+<div class="time-axis">
+  <div class="axis-header"></div>
+  <div *ngFor="let hour of hours" class="hour-label">
+    {{ hour }}
+  </div>
+</div>
+```
+
+#### Days Columns
+
+<ResponseField name="days-columns" type="div">
+  Seven columns, one for each day of the week
+</ResponseField>
+
+<Tabs>
+  <Tab title="Column Header">
+    ```html
+    <div class="column-header" [class.today]="day.isToday">
+      <span class="day-name">{{ weekDays[i] }}</span>
+      <span class="day-num">{{ day.date.getDate() }}</span>
+    </div>
+    ```
+    Displays weekday name and date number. Highlighted if it's today.
+  </Tab>
+  <Tab title="Column Body">
+    ```html
+    <div class="column-body" (click)="openNewAppointment(day.date)">
+      <!-- Grid Lines -->
+      <div *ngFor="let hour of hours" class="grid-line"></div>
+      
+      <!-- Appointments -->
+      <div *ngFor="let app of day.appointments" 
+           class="timetable-appointment"
+           [class.status-confirmada]="app.estado === 'confirmada'"
+           [class.status-pendiente]="app.estado === 'pendiente'"
+           [style.top]="getAppointmentTop(app.hora)">
+        <!-- appointment content -->
+      </div>
+    </div>
+    ```
+    Contains grid lines and absolutely positioned appointment blocks.
+  </Tab>
+  <Tab title="Appointment Block">
+    ```html
+    <div class="app-content">
+      <div class="app-header">
+        <span class="app-time">{{ app.hora }}</span>
+        <span class="app-patient">{{ app.paciente }}</span>
+      </div>
+      <div class="app-body">
+        <span class="app-treatment">{{ app.tratamiento }}</span>
+      </div>
+    </div>
+    ```
+    Displays appointment time, patient name, and treatment.
+  </Tab>
+</Tabs>
+
+## Appointment Positioning
+
+Appointments are positioned using absolute positioning with dynamic `top` values:
+
+```html
+<div *ngFor="let app of day.appointments" 
+     class="timetable-appointment"
+     [style.top]="getAppointmentTop(app.hora)">
+```
+
+The `getAppointmentTop()` method calculates the pixel offset based on:
+- **Start hour**: 8:00 AM (hour 8)
+- **Hour height**: 60px per hour
+- **Minutes offset**: Proportional within the hour
+
+<CodeGroup>
+
+```typescript Example Calculations
+// 09:00 → (9 - 8) * 60 + 0 = 60px
+// 09:30 → (9 - 8) * 60 + (30/60) * 60 = 90px
+// 14:15 → (14 - 8) * 60 + (15/60) * 60 = 375px
+```
+
+</CodeGroup>
+
+## Status Styling
+
+Appointments have dynamic CSS classes based on their status:
+
+```html
+[class.status-confirmada]="app.estado === 'confirmada'"
+[class.status-pendiente]="app.estado === 'pendiente'"
+```
+
+**Status Classes**:
+- `status-confirmada`: Green background for confirmed appointments
+- `status-pendiente`: Yellow background for pending appointments
+
+## Date Format Handling
+
+The component handles multiple date formats:
+
+<Tabs>
+  <Tab title="ISO Format">
+    **Format**: YYYY-MM-DD (e.g., "2026-03-15")
+    
+    ```typescript
+    if (app.fecha.includes('-')) {
+      const [y, m, d] = app.fecha.split('-').map(Number);
+      return d === date.getDate() && 
+             (m - 1) === date.getMonth() && 
+             y === date.getFullYear();
+    }
+    ```
+  </Tab>
+  <Tab title="European Format">
+    **Format**: D/M/YYYY (e.g., "15/3/2026")
+    
+    ```typescript
+    if (app.fecha.includes('/')) {
+      const [d, m, y] = app.fecha.split('/').map(Number);
+      return d === date.getDate() && 
+             (m - 1) === date.getMonth() && 
+             y === date.getFullYear();
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Usage Example
+
+The Calendar component is used as a routed component:
+
+<CodeGroup>
+
+```typescript app.routes.ts
+import { Routes } from '@angular/router';
+import { Calendar } from './calendar/calendar';
+
+export const routes: Routes = [
+  {
+    path: 'calendar',
+    component: Calendar,
+    data: { title: 'Calendario' }
+  }
+];
+```
+
+</CodeGroup>
+
+## Internationalization
+
+The component uses Spanish localization:
+
+<ParamField path="weekDays" type="string[]">
+  Spanish abbreviated weekday names
+</ParamField>
+
+<ParamField path="Intl.DateTimeFormat" type="API">
+  Browser API for date formatting with 'es-ES' locale
+</ParamField>
+
+```typescript
+const formatMonth = new Intl.DateTimeFormat('es-ES', { month: 'short' });
+const formatYear = new Intl.DateTimeFormat('es-ES', { year: 'numeric' });
+```
+
+## Customization
+
+### Change Business Hours
+
+Modify the `hours` array to display different time ranges:
+
+```typescript
+hours: string[] = [
+  '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
+  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'
+];
+```
+
+Don't forget to update the `startHour` in `getAppointmentTop()`:
+
+```typescript
+const startHour = 7; // Changed from 8
+```
+
+### Switch to Month View
+
+Modify `generateCalendar()` to display a full month instead of a week:
+
+```typescript
+generateCalendar(): void {
+  const year = this.currentDate.getFullYear();
+  const month = this.currentDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  
+  // Generate days for entire month
+  this.days = [];
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const date = new Date(year, month, d);
+    // ... populate calendar day
+  }
+}
+```
+
+### Add Appointment Duration Display
+
+Show appointment blocks with height based on duration:
+
+```typescript
+getAppointmentHeight(duration: string): string {
+  const minutes = parseInt(duration); // Assumes duration like "30 min"
+  const hourHeight = 60;
+  return `${(minutes / 60) * hourHeight}px`;
+}
+```
+
+In template:
+
+```html
+<div class="timetable-appointment"
+     [style.top]="getAppointmentTop(app.hora)"
+     [style.height]="getAppointmentHeight(app.duracion)">
+```
+
+### Add Click Handler for Appointments
+
+Make appointments clickable to view details:
+
+```typescript
+onAppointmentClick(appointment: AppointmentData, event: Event): void {
+  event.stopPropagation(); // Prevent day click
+  this.router.navigate(['/appointment', appointment.id]);
+}
+```
+
+```html
+<div *ngFor="let app of day.appointments" 
+     class="timetable-appointment"
+     (click)="onAppointmentClick(app, $event)">
+```
+
+## Performance Considerations
+
+For large numbers of appointments, consider:
+
+1. **Virtual Scrolling**: Only render visible time slots
+2. **Debounce Navigation**: Prevent rapid week changes
+3. **Memoization**: Cache filtered appointments per day
+4. **Lazy Loading**: Load appointment details on demand
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Appointment View" icon="list" href="/components/appointment-view">
+    List view of appointments
+  </Card>
+  <Card title="Appointment Service" icon="database" href="/api/appointment-service">
+    Service for appointment data
+  </Card>
+  <Card title="Calendar Feature" icon="calendar-days" href="/features/calendar">
+    Calendar feature documentation
+  </Card>
+  <Card title="Appointment Scheduling" icon="calendar-check" href="/features/appointment-scheduling">
+    Appointment scheduling feature
+  </Card>
+</CardGroup>

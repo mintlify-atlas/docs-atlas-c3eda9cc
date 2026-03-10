@@ -1,0 +1,250 @@
+---
+title: Server-Side Rendering (SSR)
+description: Configure and use server-side rendering in the Odontologia Frontend project
+---
+
+## Overview
+
+The Odontologia Frontend project uses **Angular Universal** with **@angular/ssr** to provide server-side rendering capabilities. SSR improves:
+
+- **SEO**: Search engines can crawl pre-rendered content
+- **Performance**: Faster initial page load
+- **Social Sharing**: Better preview cards on social media
+
+## SSR Architecture
+
+The project uses Angular's modern SSR implementation with Express:
+
+```
+Client Request → Express Server → Angular App Engine → Rendered HTML
+```
+
+## Server Configuration
+
+The SSR server is configured in `src/server.ts`:
+
+```typescript
+import {
+  AngularNodeAppEngine,
+  createNodeRequestHandler,
+  isMainModule,
+  writeResponseToNodeResponse,
+} from '@angular/ssr/node';
+import express from 'express';
+
+const app = express();
+const angularApp = new AngularNodeAppEngine();
+```
+
+### Key Components
+
+1. **AngularNodeAppEngine**: Handles Angular application rendering
+2. **Express**: Web server framework
+3. **Static File Serving**: Serves pre-built browser assets
+
+## Running the SSR Server
+
+### Build the Application
+
+First, create a production build:
+
+```bash
+npm run build
+```
+
+This generates both browser and server bundles in the `dist/` directory.
+
+### Start the Server
+
+Run the SSR server:
+
+```bash
+npm run serve:ssr:odontologia-frontend
+```
+
+The server will start on port 4000 (or the port specified by the `PORT` environment variable):
+
+```
+Node Express server listening on http://localhost:4000
+```
+
+## Server Implementation Details
+
+### Static File Serving
+
+The server serves static assets with optimized caching:
+
+```typescript
+app.use(
+  express.static(browserDistFolder, {
+    maxAge: '1y',
+    index: false,
+    redirect: false,
+  }),
+);
+```
+
+- **maxAge**: Files cached for 1 year (safe with content hashing)
+- **index**: No automatic index.html serving
+- **redirect**: No trailing slash redirects
+
+### Angular Request Handling
+
+All non-static requests are rendered by Angular:
+
+```typescript
+app.use((req, res, next) => {
+  angularApp
+    .handle(req)
+    .then((response) =>
+      response ? writeResponseToNodeResponse(response, res) : next(),
+    )
+    .catch(next);
+});
+```
+
+### Server Entry Point
+
+The server starts when:
+- Run as the main module
+- Run via PM2 process manager
+
+```typescript
+if (isMainModule(import.meta.url) || process.env['pm_id']) {
+  const port = process.env['PORT'] || 4000;
+  app.listen(port, (error) => {
+    if (error) {
+      throw error;
+    }
+    console.log(`Node Express server listening on http://localhost:${port}`);
+  });
+}
+```
+
+## Build Configuration
+
+SSR is configured in `angular.json`:
+
+```json
+{
+  "server": "src/main.server.ts",
+  "outputMode": "server",
+  "ssr": {
+    "entry": "src/server.ts"
+  }
+}
+```
+
+### Entry Points
+
+- **browser**: `src/main.ts` - Client-side bootstrap
+- **server**: `src/main.server.ts` - Server-side bootstrap
+- **ssr.entry**: `src/server.ts` - Express server
+
+## Environment Variables
+
+### PORT
+
+Specify the server port:
+
+```bash
+PORT=8080 npm run serve:ssr:odontologia-frontend
+```
+
+Default: `4000`
+
+## Adding API Endpoints
+
+You can add REST API endpoints to the Express server:
+
+```typescript
+// In src/server.ts
+app.get('/api/data', (req, res) => {
+  res.json({ message: 'Hello from API' });
+});
+```
+
+Place API routes before the Angular handler to prevent SSR from intercepting them.
+
+## SSR Dependencies
+
+The project includes these SSR-specific packages:
+
+- **@angular/ssr**: ^21.1.4 - Angular SSR support
+- **@angular/platform-server**: ^21.1.0 - Server platform
+- **express**: ^5.1.0 - Web server
+- **@types/express**: ^5.0.1 - TypeScript definitions
+
+## Production Deployment
+
+### Using Node.js
+
+1. Build the application:
+   ```bash
+   npm run build
+   ```
+
+2. Deploy the `dist/` directory and `package.json`
+
+3. Install production dependencies:
+   ```bash
+   npm install --production
+   ```
+
+4. Start the server:
+   ```bash
+   node dist/odontologia-frontend/server/server.mjs
+   ```
+
+### Using PM2
+
+PM2 is automatically detected and supported:
+
+```bash
+pm2 start dist/odontologia-frontend/server/server.mjs
+```
+
+### Using Docker
+
+Example Dockerfile:
+
+```dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY dist/ ./dist/
+COPY package*.json ./
+RUN npm install --production
+EXPOSE 4000
+CMD ["node", "dist/odontologia-frontend/server/server.mjs"]
+```
+
+## SSR Best Practices
+
+1. **Avoid Browser APIs**: Use platform checks for browser-only code
+2. **Use TransferState**: Share data between server and client
+3. **Optimize Images**: Use proper image optimization
+4. **Cache Static Assets**: Leverage HTTP caching headers
+5. **Monitor Performance**: Track TTFB and rendering time
+
+## Debugging SSR
+
+### Server Logs
+
+The server logs all requests to the console. Monitor these logs to debug issues.
+
+### Development Mode
+
+For debugging, build in development mode:
+
+```bash
+ng build --configuration development
+npm run serve:ssr:odontologia-frontend
+```
+
+This includes source maps for easier debugging.
+
+## Next Steps
+
+- Review [Build Configuration](/development/building)
+- Learn about [Testing](/development/testing)
+- Check [Contributing Guidelines](/contributing/guidelines)

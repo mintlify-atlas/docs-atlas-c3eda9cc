@@ -1,0 +1,417 @@
+---
+title: 'Routing Configuration'
+description: 'Understanding the application routing system and navigation patterns'
+icon: 'route'
+---
+
+## Overview
+
+The Odontología Frontend uses Angular's standalone routing system with a flat, straightforward route configuration. All routes are defined in `app.routes.ts` and configured through the `provideRouter` function.
+
+## Route Definitions
+
+The application's complete routing configuration:
+
+```typescript src/app/app.routes.ts
+import { Routes } from '@angular/router';
+import { LoginComponent } from './login/login';
+import { HomeComponent } from './home/home';
+import { Patient } from './patient/patient';
+import { NewPatient } from './new-patient/new-patient';
+import { PacienteDetail } from './paciente-detail/paciente-detail';
+import { Tratamientos } from './tratamientos/tratamientos';
+import { Appointment } from './appointment/appointment';
+import { Calendar } from './calendar/calendar';
+
+export const routes: Routes = [
+    { path: '', redirectTo: 'login', pathMatch: 'full' },
+    { path: 'login', component: LoginComponent, data: { title: 'Acceso' } },
+    { path: 'home', component: HomeComponent, data: { title: 'Panel de Control' } },
+    { path: 'patient', component: Patient, data: { title: 'Listado de Pacientes' } },
+    { path: 'patient/new', component: NewPatient, data: { title: 'Nuevo Paciente' } },
+    { path: 'patient/:id', component: PacienteDetail, data: { title: 'Detalle de Paciente' } },
+    { path: 'tratamientos', component: Tratamientos, data: { title: 'Gestión de Tratamientos' } },
+    { path: 'citas', component: Appointment, data: { title: 'Citas Médicas' } },
+    { path: 'calendar', component: Calendar, data: { title: 'Calendario de Citas' } }
+];
+```
+
+## Route Structure
+
+### Root Redirect
+
+```typescript
+{ path: '', redirectTo: 'login', pathMatch: 'full' }
+```
+
+The root path redirects to the login page, making it the default landing page for the application.
+
+<Note>
+  The `pathMatch: 'full'` ensures the redirect only occurs when the path is exactly empty, not when it's a prefix of another path.
+</Note>
+
+### Authentication Routes
+
+<Tabs>
+  <Tab title="Login">
+    ```typescript
+    { path: 'login', component: LoginComponent, data: { title: 'Acceso' } }
+    ```
+    
+    **URL**: `/login`
+    
+    **Purpose**: User authentication and access control
+    
+    **Component**: `LoginComponent`
+  </Tab>
+</Tabs>
+
+### Main Application Routes
+
+<AccordionGroup>
+  <Accordion title="Home / Dashboard">
+    ```typescript
+    { path: 'home', component: HomeComponent, data: { title: 'Panel de Control' } }
+    ```
+    
+    **URL**: `/home`
+    
+    The main dashboard showing overview statistics and quick actions.
+  </Accordion>
+
+  <Accordion title="Patient Management">
+    The application has three patient-related routes:
+    
+    **Patient List**
+    ```typescript
+    { path: 'patient', component: Patient, data: { title: 'Listado de Pacientes' } }
+    ```
+    URL: `/patient` - Displays all patients with search functionality
+    
+    **New Patient**
+    ```typescript
+    { path: 'patient/new', component: NewPatient, data: { title: 'Nuevo Paciente' } }
+    ```
+    URL: `/patient/new` - Form to register a new patient
+    
+    **Patient Detail**
+    ```typescript
+    { path: 'patient/:id', component: PacienteDetail, data: { title: 'Detalle de Paciente' } }
+    ```
+    URL: `/patient/:id` - Detailed view of a specific patient
+    
+    <Note>
+      The route order is important: `/patient/new` must come before `/patient/:id` to prevent "new" from being interpreted as an ID parameter.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Treatment Management">
+    ```typescript
+    { path: 'tratamientos', component: Tratamientos, data: { title: 'Gestión de Tratamientos' } }
+    ```
+    
+    **URL**: `/tratamientos`
+    
+    Manages dental treatment types, pricing, and descriptions.
+  </Accordion>
+
+  <Accordion title="Appointment Management">
+    Two routes handle appointment functionality:
+    
+    **Appointments List**
+    ```typescript
+    { path: 'citas', component: Appointment, data: { title: 'Citas Médicas' } }
+    ```
+    URL: `/citas` - List view of all appointments
+    
+    **Calendar View**
+    ```typescript
+    { path: 'calendar', component: Calendar, data: { title: 'Calendario de Citas' } }
+    ```
+    URL: `/calendar` - Calendar visualization of appointments
+  </Accordion>
+</AccordionGroup>
+
+## Route Data
+
+All routes include a `data` object with metadata:
+
+```typescript
+data: { title: 'Acceso' }
+```
+
+This data can be accessed by components and services for:
+- Setting page titles
+- Breadcrumb navigation
+- Analytics tracking
+- Access control decisions
+
+### Accessing Route Data
+
+```typescript
+import { ActivatedRoute } from '@angular/router';
+
+class SomeComponent {
+  constructor(private route: ActivatedRoute) {
+    this.route.data.subscribe(data => {
+      console.log(data['title']); // Access the title
+    });
+  }
+}
+```
+
+## Dynamic Routing
+
+### Parameterized Routes
+
+The patient detail route uses URL parameters:
+
+```typescript
+{ path: 'patient/:id', component: PacienteDetail, data: { title: 'Detalle de Paciente' } }
+```
+
+**Accessing Route Parameters:**
+
+```typescript
+import { ActivatedRoute } from '@angular/router';
+
+class PacienteDetail {
+  patientId: number;
+
+  constructor(private route: ActivatedRoute) {
+    this.patientId = Number(this.route.snapshot.paramMap.get('id'));
+  }
+}
+```
+
+**Navigation to Parameterized Routes:**
+
+<CodeGroup>
+```typescript Template (Declarative)
+<a [routerLink]="['/patient', patient.id]">View Details</a>
+```
+
+```typescript Component (Programmatic)
+import { Router } from '@angular/router';
+
+class SomeComponent {
+  constructor(private router: Router) {}
+
+  viewPatient(id: number) {
+    this.router.navigate(['/patient', id]);
+  }
+}
+```
+</CodeGroup>
+
+## Navigation Patterns
+
+### Declarative Navigation
+
+Using `RouterLink` directive in templates:
+
+```html
+<a routerLink="/home">Home</a>
+<a [routerLink]="['/patient', 123]">Patient 123</a>
+```
+
+### Programmatic Navigation
+
+Navigating from component code:
+
+```typescript
+import { Router } from '@angular/router';
+
+class SomeComponent {
+  constructor(private router: Router) {}
+
+  goToHome() {
+    this.router.navigate(['/home']);
+  }
+
+  goToPatient(id: number) {
+    this.router.navigate(['/patient', id]);
+  }
+
+  goToNewPatient() {
+    this.router.navigateByUrl('/patient/new');
+  }
+}
+```
+
+## Router Configuration
+
+The router is configured in the application config:
+
+```typescript src/app/app.config.ts
+import { provideRouter } from '@angular/router';
+import { routes } from './app.routes';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes)
+  ]
+};
+```
+
+### Router Features
+
+The current configuration uses the default router features. Additional features can be enabled:
+
+```typescript
+import { provideRouter, withDebugTracing, withHashLocation } from '@angular/router';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(
+      routes,
+      withDebugTracing(),      // Enable console logging of router events
+      withHashLocation()       // Use hash-based routing (#/path)
+    )
+  ]
+};
+```
+
+## Conditional UI Based on Routes
+
+The root component demonstrates route-based UI control:
+
+```typescript src/app/app.ts
+import { NavigationEnd, Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
+
+export class App {
+  private readonly router = inject(Router);
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map(event => (event as NavigationEnd).urlAfterRedirects)
+    ),
+    { initialValue: this.router.url }
+  );
+
+  protected showMenu = computed(() => {
+    const url = this.currentUrl();
+    return url ? !url.includes('/login') : true;
+  });
+}
+```
+
+This pattern:
+1. Listens to router events
+2. Filters for `NavigationEnd` events
+3. Extracts the current URL
+4. Converts the observable to a signal
+5. Computes UI state based on the current route
+
+**Template usage:**
+
+```html
+@if (showMenu()) {
+  <app-menu></app-menu>
+}
+```
+
+<Note>
+  The menu and header are hidden on the login page to provide a focused authentication experience.
+</Note>
+
+## Route Guards
+
+While not currently implemented, route guards can be added to protect routes:
+
+```typescript
+import { CanActivateFn } from '@angular/router';
+
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  
+  if (authService.isAuthenticated()) {
+    return true;
+  }
+  
+  const router = inject(Router);
+  return router.createUrlTree(['/login']);
+};
+
+// Apply to routes
+export const routes: Routes = [
+  { 
+    path: 'home', 
+    component: HomeComponent,
+    canActivate: [authGuard]
+  }
+];
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use RouterLink" icon="link">
+    Prefer declarative `routerLink` over programmatic navigation when possible
+  </Card>
+  <Card title="Meaningful Paths" icon="signs-post">
+    Use descriptive, semantic path names that reflect content
+  </Card>
+  <Card title="Route Data" icon="database">
+    Leverage route `data` for metadata and configuration
+  </Card>
+  <Card title="Lazy Loading" icon="bolt">
+    Consider lazy loading for large feature modules
+  </Card>
+</CardGroup>
+
+## Common Routing Scenarios
+
+### Navigate After Form Submission
+
+```typescript
+export class NewPatient {
+  constructor(
+    private patientService: PatientService,
+    private router: Router
+  ) {}
+
+  onSubmit(formData: any) {
+    this.patientService.addPatient(formData);
+    this.router.navigate(['/patient']);
+  }
+}
+```
+
+### Navigate with Query Parameters
+
+```typescript
+// Navigate to /patient?search=john
+this.router.navigate(['/patient'], { 
+  queryParams: { search: 'john' } 
+});
+
+// Access query parameters
+this.route.queryParams.subscribe(params => {
+  const search = params['search'];
+});
+```
+
+### Relative Navigation
+
+```typescript
+// From /patient/123, navigate to /patient/123/edit
+this.router.navigate(['edit'], { relativeTo: this.route });
+
+// Navigate to parent: /patient/123 -> /patient
+this.router.navigate(['..'], { relativeTo: this.route });
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Architecture" href="/concepts/architecture" icon="building">
+    Learn about the application's overall architecture
+  </Card>
+  <Card title="State Management" href="/concepts/state-management" icon="database">
+    Explore how state is managed across routes
+  </Card>
+</CardGroup>

@@ -1,122 +1,115 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Odontología Frontend",
+  "theme": "palm",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#22f48d",
+    "light": "#55fb8b",
+    "dark": "#c9fcd1"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "https://media.brand.dev/aed898d9-e898-4105-b29b-dc04fe6dc1c7.svg",
+  "logo": {
+    "light": "https://media.brand.dev/dccf1387-3a79-420a-92e6-31ea1c243e3b.svg",
+    "dark": "https://media.brand.dev/de9ec057-beb7-4eab-8205-bf810b5c5458.svg"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/Kiddgoby/Odontolog-a-frontend"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Kiddgoby/Odontolog-a-frontend"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "introduction",
+              "installation",
+              "quickstart"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Concepts",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "concepts/architecture",
+              "concepts/routing",
+              "concepts/state-management"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Features",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "features/authentication",
+              "features/patient-management",
+              "features/appointment-scheduling",
+              "features/treatment-tracking",
+              "features/calendar"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Components",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "components/overview",
+              "components/header",
+              "components/menu",
+              "components/patient-list",
+              "components/appointment-view",
+              "components/calendar-view"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Services",
             "pages": [
-              "api-reference/introduction"
+              "api/patient-service",
+              "api/appointment-service",
+              "api/treatment-service",
+              "api/auth-service"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Models",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/patient-data",
+              "api/appointment-data",
+              "api/treatment-data"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Guides",
+            "pages": [
+              "development/setup",
+              "development/testing",
+              "development/building",
+              "development/ssr"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "contributing/guidelines",
+              "contributing/code-style"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

@@ -1,0 +1,502 @@
+---
+title: 'Patient List Component'
+description: 'Searchable table view for managing patients'
+---
+
+## Overview
+
+The `Patient` component provides a comprehensive list view of all patients with search functionality, filtering capabilities, and quick actions for creating new appointments and managing patient records.
+
+## Component Definition
+
+<ParamField path="selector" type="string" default="app-patient">
+  The CSS selector used to include this component in templates
+</ParamField>
+
+<ParamField path="standalone" type="boolean" default={true}>
+  Standalone component with explicit imports
+</ParamField>
+
+<ParamField path="imports" type="array">
+  Dependencies: `CommonModule`, `FormsModule`, `RouterModule`, `NewAppointment`
+</ParamField>
+
+## Source Code Location
+
+**File**: `src/app/patient/patient.ts:8`
+
+<CodeGroup>
+
+```typescript patient.ts
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { PatientService, PatientData } from '../services/patient.service';
+import { NewAppointment } from '../new-appointment/new-appointment';
+
+@Component({
+  selector: 'app-patient',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule, NewAppointment],
+  templateUrl: './patient.html',
+  styleUrl: './patient.css',
+})
+export class Patient implements OnInit {
+  searchText: string = '';
+  patients: PatientData[] = [];
+  isNewAppointmentModalOpen: boolean = false;
+
+  constructor(private patientService: PatientService) { }
+
+  ngOnInit(): void {
+    this.patients = this.patientService.getPatients();
+  }
+
+  get filteredPatients() {
+    if (!this.searchText) {
+      return this.patients;
+    }
+    const search = this.searchText.toLowerCase();
+    return this.patients.filter(p =>
+      (p.nombre?.toLowerCase().includes(search) || false) ||
+      (p.email?.toLowerCase().includes(search) || false) ||
+      (p.phone?.includes(search) || false)
+    );
+  }
+
+  openNewAppointmentModal(): void {
+    this.isNewAppointmentModalOpen = true;
+  }
+
+  closeNewAppointmentModal(): void {
+    this.isNewAppointmentModalOpen = false;
+  }
+}
+```
+
+</CodeGroup>
+
+## Properties
+
+### searchText
+
+<ParamField path="searchText" type="string" default="''">
+  The current search query entered by the user
+</ParamField>
+
+This property is bound to the search input using two-way binding (`[(ngModel)]`), automatically updating as the user types.
+
+**Implementation**: `src/app/patient/patient.ts:16`
+
+### patients
+
+<ParamField path="patients" type="PatientData[]" default="[]">
+  Array of all patient records loaded from the service
+</ParamField>
+
+Populated during `ngOnInit()` by calling `patientService.getPatients()`.
+
+**Implementation**: `src/app/patient/patient.ts:17`
+
+### isNewAppointmentModalOpen
+
+<ParamField path="isNewAppointmentModalOpen" type="boolean" default={false}>
+  Controls the visibility of the new appointment modal
+</ParamField>
+
+**Implementation**: `src/app/patient/patient.ts:18`
+
+## Computed Properties
+
+### filteredPatients
+
+<ParamField path="filteredPatients" type="PatientData[]">
+  Getter that returns filtered patients based on the search text
+</ParamField>
+
+Filters patients by matching the search text against:
+- Patient name (`nombre`)
+- Email address (`email`)
+- Phone number (`phone`)
+
+The search is case-insensitive and returns all patients if the search text is empty.
+
+**Implementation**: `src/app/patient/patient.ts:26-36`
+
+<CodeGroup>
+
+```typescript Filtering Logic
+get filteredPatients() {
+  if (!this.searchText) {
+    return this.patients;
+  }
+  const search = this.searchText.toLowerCase();
+  return this.patients.filter(p =>
+    (p.nombre?.toLowerCase().includes(search) || false) ||
+    (p.email?.toLowerCase().includes(search) || false) ||
+    (p.phone?.includes(search) || false)
+  );
+}
+```
+
+</CodeGroup>
+
+## Methods
+
+### ngOnInit()
+
+<ParamField path="ngOnInit" type="() => void">
+  Lifecycle hook that loads patient data when the component initializes
+</ParamField>
+
+```typescript
+ngOnInit(): void {
+  this.patients = this.patientService.getPatients();
+}
+```
+
+**Implementation**: `src/app/patient/patient.ts:22-24`
+
+### openNewAppointmentModal()
+
+<ParamField path="openNewAppointmentModal" type="() => void">
+  Opens the new appointment modal dialog
+</ParamField>
+
+**Implementation**: `src/app/patient/patient.ts:38-40`
+
+### closeNewAppointmentModal()
+
+<ParamField path="closeNewAppointmentModal" type="() => void">
+  Closes the new appointment modal dialog
+</ParamField>
+
+**Implementation**: `src/app/patient/patient.ts:42-44`
+
+## Template Structure
+
+The component template is organized into several sections:
+
+### Header Section
+
+<ResponseField name="title-section" type="div">
+  - **Title**: "Pacientes"
+  - **Description**: "Gestión de pacientes de la clínica"
+</ResponseField>
+
+<ResponseField name="actions" type="div">
+  - **Nueva Cita button**: Opens appointment modal
+  - **Nuevo Paciente button**: Navigates to `/patient/new`
+</ResponseField>
+
+### Search Section
+
+<ResponseField name="search-bar" type="div">
+  Search input with icon and two-way binding to `searchText`
+  ```html
+  <input type="text" 
+         placeholder="Buscar por nombre, email o teléfono..." 
+         [(ngModel)]="searchText">
+  ```
+</ResponseField>
+
+### Table Section
+
+<Tabs>
+  <Tab title="Columns">
+    1. **Paciente**: Name and age
+    2. **Contacto**: Phone and email with icons
+    3. **Última Visita**: Date of last visit
+    4. **Próxima Cita**: Date of next appointment
+    5. **Estado**: Status badge (activo, pendiente, urgente)
+    6. **Acciones**: View details link
+  </Tab>
+  <Tab title="Data Binding">
+    ```html
+    <tr *ngFor="let patient of filteredPatients">
+      <td>
+        <div class="patient-info">
+          <span class="patient-name">{{ patient.nombre }}</span>
+          <span class="patient-age">{{ patient.edad }} años</span>
+        </div>
+      </td>
+      <!-- other columns -->
+    </tr>
+    ```
+  </Tab>
+  <Tab title="Actions">
+    Each row has a "Ver detalles" link:
+    ```html
+    <a [routerLink]="['/patient', patient.id]" class="view-details">
+      <span class="view-icon"><i class="fa-solid fa-eye"></i></span> Ver detalles
+    </a>
+    ```
+  </Tab>
+</Tabs>
+
+### Modal Overlay
+
+<ResponseField name="modal-overlay" type="div">
+  Displays the new appointment modal when `isNewAppointmentModalOpen` is true
+  ```html
+  <div class="modal-overlay" *ngIf="isNewAppointmentModalOpen" 
+       (click)="closeNewAppointmentModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <app-new-appointment 
+        (close)="closeNewAppointmentModal()"
+        (created)="closeNewAppointmentModal()">
+      </app-new-appointment>
+    </div>
+  </div>
+  ```
+</ResponseField>
+
+## PatientData Interface
+
+The component works with the `PatientData` interface:
+
+<CodeGroup>
+
+```typescript patient.service.ts
+export interface PatientData {
+  id: number;
+  nombre: string;
+  edad: number;
+  phone: string;
+  email: string;
+  address: string;
+  medication_allergies: string;
+  billing_data: string;
+  health_status: string;
+  family_history: string;
+  ultimaVisita: string;
+  proximaCita: string;
+  estado: string;
+  citas: Cita[];
+  tratamientos: Tratamiento[];
+}
+```
+
+</CodeGroup>
+
+## Service Integration
+
+The component depends on `PatientService` for data operations:
+
+<ParamField path="getPatients()" type="() => PatientData[]">
+  Retrieves all patient records from the service
+</ParamField>
+
+<CodeGroup>
+
+```typescript Service Usage
+constructor(private patientService: PatientService) { }
+
+ngOnInit(): void {
+  this.patients = this.patientService.getPatients();
+}
+```
+
+</CodeGroup>
+
+## Usage Example
+
+The Patient component is typically used as a routed component:
+
+<CodeGroup>
+
+```typescript app.routes.ts
+import { Routes } from '@angular/router';
+import { Patient } from './patient/patient';
+
+export const routes: Routes = [
+  {
+    path: 'patient',
+    component: Patient,
+    data: { title: 'Pacientes' }
+  }
+];
+```
+
+</CodeGroup>
+
+## Status Badge Styling
+
+The status badge uses dynamic CSS classes:
+
+```html
+<span class="status-badge" [ngClass]="patient.estado">
+  {{ patient.estado }}
+</span>
+```
+
+**Status Values**:
+- `activo`: Active patient (green)
+- `pendiente`: Pending patient (yellow)
+- `urgente`: Urgent patient (red)
+
+## Search Functionality
+
+The search feature provides real-time filtering:
+
+<Steps>
+  <Step title="User Types">
+    User enters search text in the input field
+  </Step>
+  <Step title="Two-way Binding">
+    `[(ngModel)]` updates `searchText` property automatically
+  </Step>
+  <Step title="Getter Recomputes">
+    `filteredPatients` getter is called on each change detection cycle
+  </Step>
+  <Step title="Table Updates">
+    Template rerenders with filtered results
+  </Step>
+</Steps>
+
+## Modal Integration
+
+The component embeds the `NewAppointment` component in a modal:
+
+### Event Handling
+
+<ParamField path="(close)" type="EventEmitter<void>">
+  Emitted when the user closes the appointment modal
+</ParamField>
+
+<ParamField path="(created)" type="EventEmitter<void>">
+  Emitted when a new appointment is successfully created
+</ParamField>
+
+Both events trigger `closeNewAppointmentModal()` to dismiss the modal.
+
+### Click-Outside Detection
+
+```html
+<div class="modal-overlay" (click)="closeNewAppointmentModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <!-- modal content -->
+  </div>
+</div>
+```
+
+Clicking the overlay closes the modal, while clicking inside the modal prevents propagation.
+
+## Router Navigation
+
+The component uses `RouterModule` for navigation:
+
+### View Patient Details
+
+```html
+<a [routerLink]="['/patient', patient.id]" class="view-details">
+  Ver detalles
+</a>
+```
+
+Navigates to `/patient/{id}` to view detailed patient information.
+
+### New Patient
+
+```html
+<button class="btn-new" routerLink="/patient/new">
+  Nuevo Paciente
+</button>
+```
+
+Navigates to `/patient/new` to create a new patient record.
+
+## Customization
+
+### Add Additional Search Fields
+
+Extend the filtering logic to include more fields:
+
+```typescript
+get filteredPatients() {
+  if (!this.searchText) {
+    return this.patients;
+  }
+  const search = this.searchText.toLowerCase();
+  return this.patients.filter(p =>
+    (p.nombre?.toLowerCase().includes(search) || false) ||
+    (p.email?.toLowerCase().includes(search) || false) ||
+    (p.phone?.includes(search) || false) ||
+    (p.address?.toLowerCase().includes(search) || false)
+  );
+}
+```
+
+### Add Sorting
+
+Implement column sorting:
+
+```typescript
+export class Patient implements OnInit {
+  sortColumn: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
+
+  sortBy(column: string): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+  }
+
+  get filteredPatients() {
+    let filtered = /* existing filter logic */;
+    
+    if (this.sortColumn) {
+      filtered = filtered.sort((a, b) => {
+        const aVal = a[this.sortColumn];
+        const bVal = b[this.sortColumn];
+        const modifier = this.sortDirection === 'asc' ? 1 : -1;
+        return aVal > bVal ? modifier : -modifier;
+      });
+    }
+    
+    return filtered;
+  }
+}
+```
+
+### Add Pagination
+
+Implement pagination for large patient lists:
+
+```typescript
+export class Patient implements OnInit {
+  currentPage: number = 1;
+  pageSize: number = 10;
+
+  get paginatedPatients() {
+    const filtered = this.filteredPatients;
+    const start = (this.currentPage - 1) * this.pageSize;
+    return filtered.slice(start, start + this.pageSize);
+  }
+
+  get totalPages() {
+    return Math.ceil(this.filteredPatients.length / this.pageSize);
+  }
+}
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Patient Service" icon="database" href="/api/patient-service">
+    Service for patient data management
+  </Card>
+  <Card title="Patient Management" icon="user" href="/features/patient-management">
+    Patient management feature documentation
+  </Card>
+  <Card title="Appointment View" icon="calendar-check" href="/components/appointment-view">
+    Appointment listing component
+  </Card>
+  <Card title="Menu" icon="bars" href="/components/menu">
+    Navigation menu component
+  </Card>
+</CardGroup>

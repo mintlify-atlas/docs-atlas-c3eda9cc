@@ -1,0 +1,198 @@
+---
+title: 'Components Overview'
+description: 'Understanding the component architecture in Odontología Frontend'
+---
+
+## Architecture Overview
+
+The Odontología Frontend application is built using Angular's standalone components architecture. This modern approach eliminates the need for NgModules and provides a more streamlined component structure.
+
+### Standalone Components
+
+All components in the application use the `standalone: true` flag, which allows them to:
+
+- **Self-contained imports**: Each component explicitly declares its dependencies
+- **Direct usage**: Components can be imported directly without module wrappers
+- **Simplified testing**: Standalone components are easier to test in isolation
+- **Better tree-shaking**: Unused code is more easily eliminated from production builds
+
+<CodeGroup>
+
+```typescript Example: Standalone Component
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+
+@Component({
+  selector: 'app-example',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  templateUrl: './example.html',
+  styleUrl: './example.css'
+})
+export class ExampleComponent {
+  // Component logic
+}
+```
+
+</CodeGroup>
+
+### Component Categories
+
+The application components are organized into several categories:
+
+#### Layout Components
+
+<CardGroup cols={2}>
+  <Card title="Header" icon="heading" href="/components/header">
+    Top navigation bar displaying page titles and user information
+  </Card>
+  <Card title="Menu" icon="bars" href="/components/menu">
+    Collapsible sidebar navigation with route links
+  </Card>
+</CardGroup>
+
+#### Feature Components
+
+<CardGroup cols={2}>
+  <Card title="Patient List" icon="users" href="/components/patient-list">
+    Searchable table view of all patients with filtering
+  </Card>
+  <Card title="Appointment View" icon="calendar-check" href="/components/appointment-view">
+    Manage and edit appointments with status updates
+  </Card>
+  <Card title="Calendar View" icon="calendar" href="/components/calendar-view">
+    Weekly calendar grid showing appointments by day and time
+  </Card>
+</CardGroup>
+
+### Import Pattern
+
+The application follows a consistent import pattern across all components:
+
+1. **Angular Core**: Component decorator, lifecycle hooks, signals
+2. **Angular Common**: CommonModule for directives like `*ngIf` and `*ngFor`
+3. **Forms**: FormsModule for template-driven forms with `[(ngModel)]`
+4. **Router**: Navigation and routing functionality
+5. **Services**: Application-specific services for data management
+6. **Child Components**: Other standalone components used in templates
+
+<CodeGroup>
+
+```typescript Import Order Example
+// Angular core
+import { Component, OnInit, signal } from '@angular/core';
+
+// Angular common modules
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+
+// Application services
+import { PatientService } from '../services/patient.service';
+
+// Child components
+import { NewAppointment } from '../new-appointment/new-appointment';
+```
+
+</CodeGroup>
+
+### Styling Approach
+
+Each component has its own CSS file using Angular's component-scoped styling:
+
+- **Scoped styles**: Styles are automatically scoped to the component
+- **CSS variables**: Global design tokens defined in `app.css`
+- **BEM methodology**: Class names follow Block-Element-Modifier convention
+- **Responsive design**: Mobile-first approach with media queries
+
+### State Management
+
+Components use Angular signals for reactive state management:
+
+<ParamField path="signal()" type="function">
+  Creates a writable signal for local component state
+</ParamField>
+
+<ParamField path="toSignal()" type="function">
+  Converts Observables to signals for seamless integration
+</ParamField>
+
+<ParamField path="computed()" type="function">
+  Derives values from other signals with automatic updates
+</ParamField>
+
+### Service Integration
+
+Components interact with services for data operations:
+
+- **PatientService**: CRUD operations for patient data
+- **AppointmentService**: Manage appointments and calendar data
+- **Router**: Navigation between views
+
+<CodeGroup>
+
+```typescript Service Injection
+export class Patient implements OnInit {
+  constructor(private patientService: PatientService) { }
+
+  ngOnInit(): void {
+    this.patients = this.patientService.getPatients();
+  }
+}
+```
+
+```typescript Modern Inject Pattern
+export class HeaderComponent {
+  private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
+}
+```
+
+</CodeGroup>
+
+### Template Patterns
+
+Common template patterns used across components:
+
+#### Conditional Rendering
+
+```html
+<div *ngIf="isModalOpen">Modal content</div>
+```
+
+#### List Rendering
+
+```html
+<tr *ngFor="let item of filteredItems">
+  <td>{{ item.name }}</td>
+</tr>
+```
+
+#### Two-way Binding
+
+```html
+<input [(ngModel)]="searchText" />
+```
+
+#### Event Handling
+
+```html
+<button (click)="handleClick()">Click me</button>
+```
+
+#### Dynamic Classes
+
+```html
+<div [class.active]="isActive" [ngClass]="statusClass">
+```
+
+### Next Steps
+
+Explore the individual component documentation to learn about specific implementations:
+
+- [Header Component](/components/header) - Dynamic page titles
+- [Menu Component](/components/menu) - Collapsible navigation
+- [Patient List](/components/patient-list) - Search and filter patients
+- [Appointment View](/components/appointment-view) - Manage appointments
+- [Calendar View](/components/calendar-view) - Weekly schedule visualization

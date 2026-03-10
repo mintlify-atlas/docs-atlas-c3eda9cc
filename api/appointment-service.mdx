@@ -1,0 +1,321 @@
+---
+title: 'AppointmentService'
+description: 'Service for managing patient appointments, scheduling, and attendance tracking'
+---
+
+## Overview
+
+The `AppointmentService` is an Angular injectable service that handles appointment management including scheduling, status updates, attendance tracking, and time modifications.
+
+## Interface
+
+### AppointmentData
+
+Represents a complete appointment record.
+
+```typescript
+export interface AppointmentData {
+  id: number;
+  fecha: string;
+  hora: string;
+  paciente: string;
+  tratamiento: string;
+  doctor: string;
+  duracion: string;
+  estado: 'confirmada' | 'pendiente' | 'completada';
+  asistido: 'sí' | 'no' | 'pendiente';
+}
+```
+
+<ResponseField name="id" type="number" required>
+  Unique identifier for the appointment
+</ResponseField>
+
+<ResponseField name="fecha" type="string" required>
+  Date of the appointment
+</ResponseField>
+
+<ResponseField name="hora" type="string" required>
+  Time of the appointment
+</ResponseField>
+
+<ResponseField name="paciente" type="string" required>
+  Name of the patient
+</ResponseField>
+
+<ResponseField name="tratamiento" type="string" required>
+  Type of treatment for the appointment
+</ResponseField>
+
+<ResponseField name="doctor" type="string" required>
+  Name of the doctor
+</ResponseField>
+
+<ResponseField name="duracion" type="string" required>
+  Duration of the appointment (e.g., '30 min', '60 min')
+</ResponseField>
+
+<ResponseField name="estado" type="'confirmada' | 'pendiente' | 'completada'" required>
+  Current status of the appointment
+</ResponseField>
+
+<ResponseField name="asistido" type="'sí' | 'no' | 'pendiente'" required>
+  Attendance status of the patient
+</ResponseField>
+
+## Methods
+
+### getAppointments()
+
+Retrieves all appointments.
+
+```typescript
+getAppointments(): AppointmentData[]
+```
+
+<ResponseField name="return" type="AppointmentData[]">
+  Array containing all appointment records
+</ResponseField>
+
+<CodeGroup>
+```typescript Basic Usage
+import { AppointmentService } from './services/appointment.service';
+
+export class AppointmentListComponent {
+  constructor(private appointmentService: AppointmentService) {}
+
+  loadAppointments() {
+    const appointments = this.appointmentService.getAppointments();
+    console.log(`Total appointments: ${appointments.length}`);
+  }
+}
+```
+
+```typescript Filter by Status
+const allAppointments = this.appointmentService.getAppointments();
+const confirmedAppointments = allAppointments.filter(
+  a => a.estado === 'confirmada'
+);
+```
+
+```typescript Get Today's Appointments
+const today = new Date().toLocaleDateString();
+const todayAppointments = this.appointmentService.getAppointments()
+  .filter(a => a.fecha === today);
+```
+</CodeGroup>
+
+### updateAppointmentStatus()
+
+Updates the status of an appointment.
+
+```typescript
+updateAppointmentStatus(id: number, status: 'confirmada' | 'pendiente' | 'completada'): void
+```
+
+<ParamField path="id" type="number" required>
+  The unique identifier of the appointment
+</ParamField>
+
+<ParamField path="status" type="'confirmada' | 'pendiente' | 'completada'" required>
+  The new status to set for the appointment
+</ParamField>
+
+<CodeGroup>
+```typescript Confirm Appointment
+this.appointmentService.updateAppointmentStatus(1, 'confirmada');
+```
+
+```typescript Complete Appointment
+this.appointmentService.updateAppointmentStatus(5, 'completada');
+```
+
+```typescript With Notification
+confirmAppointment(appointmentId: number) {
+  this.appointmentService.updateAppointmentStatus(appointmentId, 'confirmada');
+  this.showNotification('Appointment confirmed successfully');
+}
+```
+</CodeGroup>
+
+### addAppointment()
+
+Adds a new appointment to the system.
+
+```typescript
+addAppointment(data: Omit<AppointmentData, 'id' | 'estado' | 'asistido' | 'duracion'>): void
+```
+
+<ParamField path="data" type="object" required>
+  Appointment data object with the following required properties:
+  - `fecha` (string): Appointment date
+  - `hora` (string): Appointment time
+  - `paciente` (string): Patient name
+  - `tratamiento` (string): Treatment type
+  - `doctor` (string): Doctor name
+</ParamField>
+
+<CodeGroup>
+```typescript Basic Usage
+const newAppointment = {
+  fecha: '10/3/2026',
+  hora: '14:00',
+  paciente: 'Roberto Silva',
+  tratamiento: 'Revisión general',
+  doctor: 'Dr. Rodríguez'
+};
+
+this.appointmentService.addAppointment(newAppointment);
+```
+
+```typescript From Form Submission
+onScheduleAppointment(formData: any) {
+  const appointmentData = {
+    fecha: formData.date,
+    hora: formData.time,
+    paciente: formData.patientName,
+    tratamiento: formData.treatmentType,
+    doctor: formData.doctorName
+  };
+  
+  this.appointmentService.addAppointment(appointmentData);
+  this.showSuccess('Appointment scheduled successfully');
+}
+```
+</CodeGroup>
+
+### deleteAppointment()
+
+Removes an appointment from the system.
+
+```typescript
+deleteAppointment(id: number): void
+```
+
+<ParamField path="id" type="number" required>
+  The unique identifier of the appointment to delete
+</ParamField>
+
+<CodeGroup>
+```typescript Basic Usage
+this.appointmentService.deleteAppointment(3);
+```
+
+```typescript With Confirmation
+cancelAppointment(appointmentId: number) {
+  if (confirm('Are you sure you want to cancel this appointment?')) {
+    this.appointmentService.deleteAppointment(appointmentId);
+    this.showSuccess('Appointment cancelled');
+    this.refreshAppointments();
+  }
+}
+```
+</CodeGroup>
+
+### updateAppointmentTime()
+
+Updates the time of an existing appointment.
+
+```typescript
+updateAppointmentTime(id: number, time: string): void
+```
+
+<ParamField path="id" type="number" required>
+  The unique identifier of the appointment
+</ParamField>
+
+<ParamField path="time" type="string" required>
+  The new time for the appointment (e.g., '14:30')
+</ParamField>
+
+<CodeGroup>
+```typescript Basic Usage
+this.appointmentService.updateAppointmentTime(1, '15:00');
+```
+
+```typescript Reschedule Appointment
+rescheduleAppointment(appointmentId: number, newTime: string) {
+  this.appointmentService.updateAppointmentTime(appointmentId, newTime);
+  this.notifyPatient('Your appointment has been rescheduled');
+}
+```
+</CodeGroup>
+
+### updateAppointmentAttendance()
+
+Updates the attendance status of an appointment.
+
+```typescript
+updateAppointmentAttendance(id: number, asistido: 'sí' | 'no' | 'pendiente'): void
+```
+
+<ParamField path="id" type="number" required>
+  The unique identifier of the appointment
+</ParamField>
+
+<ParamField path="asistido" type="'sí' | 'no' | 'pendiente'" required>
+  The attendance status to set
+</ParamField>
+
+<CodeGroup>
+```typescript Mark as Attended
+this.appointmentService.updateAppointmentAttendance(1, 'sí');
+```
+
+```typescript Mark as No-Show
+this.appointmentService.updateAppointmentAttendance(3, 'no');
+```
+
+```typescript Check-in System
+checkInPatient(appointmentId: number) {
+  this.appointmentService.updateAppointmentAttendance(appointmentId, 'sí');
+  this.appointmentService.updateAppointmentStatus(appointmentId, 'confirmada');
+  this.showSuccess('Patient checked in');
+}
+```
+</CodeGroup>
+
+## Usage Example
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { AppointmentService, AppointmentData } from './services/appointment.service';
+
+@Component({
+  selector: 'app-appointment-calendar',
+  templateUrl: './appointment-calendar.component.html'
+})
+export class AppointmentCalendarComponent implements OnInit {
+  appointments: AppointmentData[] = [];
+  pendingAppointments: AppointmentData[] = [];
+
+  constructor(private appointmentService: AppointmentService) {}
+
+  ngOnInit() {
+    this.loadAppointments();
+  }
+
+  loadAppointments() {
+    this.appointments = this.appointmentService.getAppointments();
+    this.pendingAppointments = this.appointments.filter(
+      a => a.estado === 'pendiente'
+    );
+  }
+
+  confirmAppointment(id: number) {
+    this.appointmentService.updateAppointmentStatus(id, 'confirmada');
+    this.loadAppointments();
+  }
+
+  rescheduleAppointment(id: number, newTime: string) {
+    this.appointmentService.updateAppointmentTime(id, newTime);
+    this.loadAppointments();
+  }
+
+  checkInPatient(id: number) {
+    this.appointmentService.updateAppointmentAttendance(id, 'sí');
+    this.appointmentService.updateAppointmentStatus(id, 'completada');
+    this.loadAppointments();
+  }
+}
+```

@@ -1,0 +1,307 @@
+---
+title: 'Application Architecture'
+description: 'Understanding the Angular standalone component architecture and application structure'
+icon: 'building'
+---
+
+## Overview
+
+The Odontología Frontend application is built using **Angular 18** with a modern standalone component architecture. The application eliminates the need for NgModules, embracing a simpler, more streamlined approach to building Angular applications.
+
+<Note>
+  This application uses Angular's **standalone components** exclusively, removing NgModule dependencies and simplifying the component structure.
+</Note>
+
+## Standalone Component Architecture
+
+### What Are Standalone Components?
+
+Standalone components are self-contained Angular components that declare their own dependencies directly, without requiring an NgModule. This reduces boilerplate and makes components more portable and easier to understand.
+
+### Root Component
+
+The application's root component demonstrates the standalone architecture pattern:
+
+```typescript src/app/app.ts
+import { Component, computed, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
+import { Menu } from './menu/menu';
+import { HeaderComponent } from './header/header';
+
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet, Menu, HeaderComponent],
+  templateUrl: './app.html',
+  styleUrl: './app.css'
+})
+export class App {
+  private readonly router = inject(Router);
+  protected readonly title = signal('odontologia-frontend');
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map(event => (event as NavigationEnd).urlAfterRedirects)
+    ),
+    { initialValue: this.router.url }
+  );
+
+  protected showMenu = computed(() => {
+    const url = this.currentUrl();
+    return url ? !url.includes('/login') : true;
+  });
+}
+```
+
+### Key Architecture Features
+
+<Accordion title="Dependency Injection with inject()">
+  The application uses the modern `inject()` function instead of constructor-based injection:
+  
+  ```typescript
+  private readonly router = inject(Router);
+  ```
+  
+  This approach is more concise and allows for injection outside of constructors.
+</Accordion>
+
+<Accordion title="Reactive State with Signals">
+  Angular Signals provide fine-grained reactivity:
+  
+  ```typescript
+  protected readonly title = signal('odontologia-frontend');
+  ```
+  
+  Signals offer better performance than traditional change detection.
+</Accordion>
+
+<Accordion title="RxJS Interoperability">
+  The `toSignal()` function bridges RxJS observables and Angular signals:
+  
+  ```typescript
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map(event => (event as NavigationEnd).urlAfterRedirects)
+    ),
+    { initialValue: this.router.url }
+  );
+  ```
+</Accordion>
+
+<Accordion title="Computed Values">
+  Derived state is created using `computed()`:
+  
+  ```typescript
+  protected showMenu = computed(() => {
+    const url = this.currentUrl();
+    return url ? !url.includes('/login') : true;
+  });
+  ```
+  
+  Computed signals automatically recalculate when their dependencies change.
+</Accordion>
+
+## Application Configuration
+
+The application bootstrap configuration is defined in `app.config.ts`:
+
+```typescript src/app/app.config.ts
+import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { routes } from './app.routes';
+import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideRouter(routes)
+  ]
+};
+```
+
+### Provider Configuration
+
+<CardGroup cols={2}>
+  <Card title="Global Error Listeners" icon="triangle-exclamation">
+    Captures and handles global errors across the application
+  </Card>
+  <Card title="Router Provider" icon="route">
+    Configures the Angular router with the application's route definitions
+  </Card>
+</CardGroup>
+
+## Component Structure
+
+### Typical Component Pattern
+
+Most components in the application follow this structure:
+
+```typescript src/app/patient/patient.ts
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { PatientService, PatientData } from '../services/patient.service';
+
+@Component({
+  selector: 'app-patient',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
+  templateUrl: './patient.html',
+  styleUrl: './patient.css',
+})
+export class Patient implements OnInit {
+  searchText: string = '';
+  patients: PatientData[] = [];
+
+  constructor(private patientService: PatientService) { }
+
+  ngOnInit(): void {
+    this.patients = this.patientService.getPatients();
+  }
+
+  get filteredPatients() {
+    if (!this.searchText) {
+      return this.patients;
+    }
+    const search = this.searchText.toLowerCase();
+    return this.patients.filter(p =>
+      (p.nombre?.toLowerCase().includes(search) || false) ||
+      (p.email?.toLowerCase().includes(search) || false) ||
+      (p.phone?.includes(search) || false)
+    );
+  }
+}
+```
+
+### Component Characteristics
+
+- **Standalone**: All components use `standalone: true`
+- **Explicit Imports**: Each component declares its own template dependencies
+- **Service Injection**: Services are injected via constructor or `inject()`
+- **Lifecycle Hooks**: Standard Angular lifecycle hooks (`OnInit`, etc.)
+
+## Template Syntax
+
+The application uses Angular's modern control flow syntax:
+
+```html src/app/app.html
+<div class="app-container" [class.no-menu]="!showMenu()">
+    @if (showMenu()) {
+    <app-menu></app-menu>
+    }
+    <main class="content">
+        @if (showMenu()) {
+        <app-header></app-header>
+        }
+        <router-outlet />
+    </main>
+</div>
+```
+
+<Note>
+  The `@if` syntax is Angular's new built-in control flow, replacing `*ngIf` for better performance and type safety.
+</Note>
+
+## Directory Structure
+
+```
+src/app/
+├── app.ts                 # Root component
+├── app.html              # Root template
+├── app.css               # Root styles
+├── app.config.ts         # Application configuration
+├── app.routes.ts         # Route definitions
+├── services/             # Singleton services
+│   ├── patient.service.ts
+│   ├── treatment.service.ts
+│   ├── appointment.service.ts
+│   └── auth.ts
+├── patient/              # Patient list component
+├── paciente-detail/      # Patient detail component
+├── new-patient/          # New patient form
+├── appointment/          # Appointments list
+├── calendar/             # Calendar view
+├── tratamientos/         # Treatments management
+├── login/                # Authentication
+├── home/                 # Dashboard
+├── menu/                 # Navigation menu
+└── header/               # Application header
+```
+
+## Service Architecture
+
+All services use Angular's `providedIn: 'root'` pattern for singleton behavior:
+
+```typescript
+@Injectable({
+  providedIn: 'root'
+})
+export class PatientService {
+  // Service implementation
+}
+```
+
+This pattern:
+- Creates a single instance across the application
+- Enables tree-shaking for unused services
+- Eliminates the need for provider arrays in modules
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use Signals for Reactive State" icon="signal">
+    Prefer signals over traditional observables for component state
+  </Card>
+  <Card title="Leverage inject()" icon="syringe">
+    Use the modern inject() function for dependency injection
+  </Card>
+  <Card title="Standalone Components" icon="cube">
+    All new components should be standalone
+  </Card>
+  <Card title="Explicit Imports" icon="file-import">
+    Declare all template dependencies in the imports array
+  </Card>
+</CardGroup>
+
+## Performance Considerations
+
+### Signals vs Observables
+
+**Use Signals when:**
+- Managing local component state
+- Creating derived/computed values
+- Simple synchronous updates
+
+**Use Observables when:**
+- Handling asynchronous operations
+- Working with HTTP requests
+- Complex event streams
+
+### Change Detection Optimization
+
+The application benefits from Angular's signal-based change detection:
+
+```typescript
+// Signals trigger precise updates
+protected showMenu = computed(() => {
+  const url = this.currentUrl();
+  return url ? !url.includes('/login') : true;
+});
+```
+
+Only components that depend on changed signals are re-rendered.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Routing" href="/concepts/routing" icon="route">
+    Learn about the application's routing configuration
+  </Card>
+  <Card title="State Management" href="/concepts/state-management" icon="database">
+    Explore how state is managed across the application
+  </Card>
+</CardGroup>

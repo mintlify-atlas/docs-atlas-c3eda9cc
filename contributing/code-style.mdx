@@ -1,0 +1,428 @@
+---
+title: Code Style Guidelines
+description: Code style conventions and formatting rules for the Odontologia Frontend project
+---
+
+## Overview
+
+This project follows strict code style guidelines to maintain consistency and readability. We use automated tools to enforce these standards.
+
+## Prettier Configuration
+
+The project uses **Prettier** for automatic code formatting with the following configuration:
+
+```json
+{
+  "printWidth": 100,
+  "singleQuote": true,
+  "overrides": [
+    {
+      "files": "*.html",
+      "options": {
+        "parser": "angular"
+      }
+    }
+  ]
+}
+```
+
+### Key Settings
+
+- **Print Width**: 100 characters per line
+- **Quotes**: Single quotes for JavaScript/TypeScript
+- **HTML Parser**: Angular-specific HTML parsing
+
+## TypeScript Style
+
+### Strict Mode
+
+The project uses TypeScript strict mode with additional checks:
+
+```json
+{
+  "strict": true,
+  "noImplicitOverride": true,
+  "noPropertyAccessFromIndexSignature": true,
+  "noImplicitReturns": true,
+  "noFallthroughCasesInSwitch": true
+}
+```
+
+### Type Annotations
+
+Always provide explicit types:
+
+```typescript
+// Good
+function calculateTotal(price: number, tax: number): number {
+  return price + tax;
+}
+
+// Bad
+function calculateTotal(price, tax) {
+  return price + tax;
+}
+```
+
+### Interfaces vs Types
+
+Prefer interfaces for object shapes:
+
+```typescript
+// Good
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+// Use type for unions or complex types
+type Status = 'active' | 'inactive' | 'pending';
+```
+
+## Angular Style
+
+### Component Structure
+
+Follow Angular's style guide for component organization:
+
+```typescript
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+
+@Component({
+  selector: 'app-user-card',
+  standalone: true,
+  templateUrl: './user-card.component.html',
+  styleUrl: './user-card.component.css'
+})
+export class UserCardComponent {
+  // Inputs first
+  @Input() user!: User;
+  
+  // Outputs second
+  @Output() userSelected = new EventEmitter<User>();
+  
+  // Public properties
+  isActive = false;
+  
+  // Constructor
+  constructor() {}
+  
+  // Lifecycle hooks
+  ngOnInit(): void {
+    // Initialization logic
+  }
+  
+  // Public methods
+  selectUser(): void {
+    this.userSelected.emit(this.user);
+  }
+  
+  // Private methods
+  private validateUser(): boolean {
+    return !!this.user.id;
+  }
+}
+```
+
+### Naming Conventions
+
+#### Files
+
+- Components: `user-card.component.ts`
+- Services: `user.service.ts`
+- Pipes: `format-date.pipe.ts`
+- Directives: `highlight.directive.ts`
+- Guards: `auth.guard.ts`
+- Interceptors: `auth.interceptor.ts`
+
+#### Classes and Interfaces
+
+```typescript
+// PascalCase for classes and interfaces
+class UserService { }
+interface UserProfile { }
+
+// Suffix for Angular artifacts
+class UserComponent { }
+class UserService { }
+class FormatDatePipe { }
+class HighlightDirective { }
+class AuthGuard { }
+```
+
+#### Variables and Functions
+
+```typescript
+// camelCase for variables and functions
+const userName = 'John';
+function getUserProfile() { }
+
+// UPPER_SNAKE_CASE for constants
+const MAX_RETRY_ATTEMPTS = 3;
+const API_BASE_URL = 'https://api.example.com';
+```
+
+### Template Style
+
+#### One-Way Binding
+
+```html
+<!-- Property binding -->
+<img [src]="imageUrl" [alt]="imageAlt">
+
+<!-- Event binding -->
+<button (click)="handleClick()">Click Me</button>
+
+<!-- Two-way binding -->
+<input [(ngModel)]="userName">
+```
+
+#### Structural Directives
+
+```html
+<!-- Use @if, @for, @switch (Angular 21 syntax) -->
+@if (isVisible) {
+  <div>Content</div>
+}
+
+@for (item of items; track item.id) {
+  <div>{{ item.name }}</div>
+}
+
+@switch (status) {
+  @case ('active') {
+    <span>Active</span>
+  }
+  @case ('inactive') {
+    <span>Inactive</span>
+  }
+}
+```
+
+#### Template Formatting
+
+Keep templates clean and readable:
+
+```html
+<!-- Good: Proper indentation and line breaks -->
+<div class="user-card">
+  <h2>{{ user.name }}</h2>
+  <p>{{ user.email }}</p>
+  <button (click)="selectUser()">Select</button>
+</div>
+
+<!-- Bad: Everything on one line -->
+<div class="user-card"><h2>{{ user.name }}</h2><p>{{ user.email }}</p></div>
+```
+
+## CSS/SCSS Style
+
+### Component Styles
+
+Use component-scoped styles:
+
+```css
+/* user-card.component.css */
+:host {
+  display: block;
+  padding: 1rem;
+}
+
+.user-card {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.user-card__title {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+```
+
+### BEM Naming
+
+Consider using BEM (Block Element Modifier) for class names:
+
+```css
+.user-card { }              /* Block */
+.user-card__title { }       /* Element */
+.user-card--featured { }    /* Modifier */
+```
+
+## Import Organization
+
+Organize imports in this order:
+
+```typescript
+// 1. Angular core imports
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+// 2. Angular feature imports
+import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+
+// 3. Third-party imports
+import { Observable } from 'rxjs';
+
+// 4. Application imports
+import { UserService } from './services/user.service';
+import { User } from './models/user.interface';
+```
+
+## Comments and Documentation
+
+### JSDoc Comments
+
+Document public APIs:
+
+```typescript
+/**
+ * Retrieves user profile by ID
+ * @param userId - The unique identifier of the user
+ * @returns Observable containing the user profile
+ * @throws {Error} When user is not found
+ */
+getUserProfile(userId: string): Observable<User> {
+  return this.http.get<User>(`/api/users/${userId}`);
+}
+```
+
+### Inline Comments
+
+Use sparingly for complex logic:
+
+```typescript
+// Calculate tax based on regional rules
+const tax = price * (region === 'EU' ? 0.2 : 0.15);
+```
+
+### Avoid Obvious Comments
+
+```typescript
+// Bad: Comment states the obvious
+// Increment counter
+counter++;
+
+// Good: No comment needed for obvious code
+counter++;
+```
+
+## RxJS Style
+
+### Observable Naming
+
+Suffix observables with `$`:
+
+```typescript
+user$: Observable<User>;
+users$ = this.userService.getUsers();
+```
+
+### Operator Formatting
+
+```typescript
+this.users$ = this.userService.getUsers().pipe(
+  map(users => users.filter(u => u.isActive)),
+  tap(users => console.log('Active users:', users)),
+  catchError(error => of([]))
+);
+```
+
+### Unsubscribe Pattern
+
+Use `takeUntilDestroyed()` for automatic cleanup:
+
+```typescript
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+export class UserComponent {
+  private destroyRef = inject(DestroyRef);
+  
+  ngOnInit() {
+    this.userService.getUsers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(users => this.users = users);
+  }
+}
+```
+
+## Testing Style
+
+### Test Structure
+
+```typescript
+describe('UserService', () => {
+  let service: UserService;
+  
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(UserService);
+  });
+  
+  describe('getUser', () => {
+    it('should return user when found', () => {
+      // Arrange
+      const userId = '123';
+      
+      // Act
+      const result = service.getUser(userId);
+      
+      // Assert
+      expect(result).toBeDefined();
+    });
+    
+    it('should throw error when user not found', () => {
+      // Test implementation
+    });
+  });
+});
+```
+
+### Descriptive Test Names
+
+```typescript
+// Good: Describes what is tested and expected outcome
+it('should display error message when login fails', () => { });
+
+// Bad: Vague description
+it('should work', () => { });
+```
+
+## Formatting Commands
+
+While Prettier is configured, you can manually format files:
+
+```bash
+# Format all files (if prettier CLI is installed)
+npx prettier --write "src/**/*.{ts,html,css,json}"
+
+# Check formatting
+npx prettier --check "src/**/*.{ts,html,css,json}"
+```
+
+## Linting
+
+The project uses TypeScript's strict compiler checks as linting. Run type checking:
+
+```bash
+ng build --configuration development
+```
+
+## Best Practices Summary
+
+1. **Use Prettier**: Let it handle formatting automatically
+2. **Enable Strict Mode**: Catch errors at compile time
+3. **Type Everything**: Explicit types improve maintainability
+4. **Follow Angular Style Guide**: Use official conventions
+5. **Write Tests**: Maintain high test coverage
+6. **Document Public APIs**: Use JSDoc for public methods
+7. **Keep It Simple**: Write clear, readable code
+8. **Use Standalone Components**: Modern Angular architecture
+
+## Next Steps
+
+- Review [Contributing Guidelines](/contributing/guidelines)
+- Learn about [Testing](/development/testing)
+- Explore [Development Setup](/development/setup)

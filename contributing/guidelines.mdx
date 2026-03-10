@@ -1,0 +1,283 @@
+---
+title: Contributing Guidelines
+description: Learn how to contribute to the Odontologia Frontend project
+---
+
+## Welcome Contributors
+
+Thank you for your interest in contributing to the Odontologia Frontend project! This guide will help you understand our development process and how to submit contributions.
+
+## Getting Started
+
+### 1. Set Up Your Environment
+
+Follow the [Development Setup](/development/setup) guide to configure your local development environment.
+
+### 2. Understand the Codebase
+
+Familiarize yourself with:
+- **Angular 21**: Modern Angular with standalone components
+- **TypeScript 5.9**: Strict type checking enabled
+- **Angular SSR**: Server-side rendering with Express
+- **Vitest**: Testing framework
+
+### 3. Find Something to Work On
+
+Look for:
+- Open issues in the issue tracker
+- Features marked as "good first issue"
+- Documentation improvements
+- Bug reports
+
+## Development Workflow
+
+### 1. Fork and Clone
+
+Fork the repository and clone your fork:
+
+```bash
+git clone <your-fork-url>
+cd odontologia-frontend
+```
+
+### 2. Create a Branch
+
+Create a feature branch from `main`:
+
+```bash
+git checkout -b feature/your-feature-name
+```
+
+Branch naming conventions:
+- `feature/` - New features
+- `fix/` - Bug fixes
+- `docs/` - Documentation updates
+- `refactor/` - Code refactoring
+- `test/` - Test additions or updates
+
+### 3. Make Your Changes
+
+Follow these practices:
+- Write clean, readable code
+- Follow the [Code Style Guidelines](/contributing/code-style)
+- Add tests for new functionality
+- Update documentation as needed
+
+### 4. Test Your Changes
+
+Run the test suite:
+
+```bash
+npm test
+```
+
+Test the application locally:
+
+```bash
+npm start
+```
+
+Build and test SSR:
+
+```bash
+npm run build
+npm run serve:ssr:odontologia-frontend
+```
+
+### 5. Commit Your Changes
+
+Write clear, descriptive commit messages:
+
+```bash
+git add .
+git commit -m "feat: add user profile component"
+```
+
+Commit message format:
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation change
+- `style:` - Code style/formatting
+- `refactor:` - Code refactoring
+- `test:` - Test updates
+- `chore:` - Build/tooling changes
+
+### 6. Push and Create Pull Request
+
+Push your changes:
+
+```bash
+git push origin feature/your-feature-name
+```
+
+Create a pull request on GitHub with:
+- Clear title and description
+- Reference to related issues
+- Screenshots (if applicable)
+- Test results
+
+## Code Review Process
+
+### What We Look For
+
+1. **Code Quality**: Clean, maintainable code
+2. **Testing**: Adequate test coverage
+3. **Documentation**: Updated docs for new features
+4. **Style**: Follows project conventions
+5. **Functionality**: Works as intended
+
+### Review Timeline
+
+We aim to review pull requests within:
+- Bug fixes: 1-2 days
+- New features: 3-5 days
+- Documentation: 1-2 days
+
+## Testing Requirements
+
+### Unit Tests
+
+All new code should include unit tests:
+
+```typescript
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { YourComponent } from './your-component';
+
+describe('YourComponent', () => {
+  it('should create', () => {
+    // Test implementation
+  });
+});
+```
+
+### Test Coverage
+
+Maintain test coverage above 80% for new code.
+
+## Documentation
+
+### Code Documentation
+
+Document complex logic with comments:
+
+```typescript
+/**
+ * Calculates the total price including taxes
+ * @param basePrice - The base price before tax
+ * @param taxRate - The tax rate as a decimal (e.g., 0.1 for 10%)
+ * @returns The total price including tax
+ */
+function calculateTotal(basePrice: number, taxRate: number): number {
+  return basePrice * (1 + taxRate);
+}
+```
+
+### User Documentation
+
+Update relevant documentation pages when adding features.
+
+## Component Guidelines
+
+### Use Standalone Components
+
+The project uses Angular's standalone component API:
+
+```typescript
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-your-component',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './your-component.html',
+  styleUrl: './your-component.css'
+})
+export class YourComponent {
+  // Component logic
+}
+```
+
+### Component Structure
+
+Organize components with:
+- `*.component.ts` - Component logic
+- `*.component.html` - Template
+- `*.component.css` - Styles
+- `*.component.spec.ts` - Tests
+
+## Accessibility
+
+Ensure all UI components are accessible:
+- Semantic HTML elements
+- ARIA labels where needed
+- Keyboard navigation support
+- Sufficient color contrast
+- Screen reader compatibility
+
+## Performance
+
+Optimize for performance:
+- Use OnPush change detection where possible
+- Lazy load routes and components
+- Optimize images and assets
+- Monitor bundle size (see [Building](/development/building))
+
+## Security
+
+Follow security best practices:
+- Sanitize user input
+- Use Angular's built-in security features
+- Avoid direct DOM manipulation
+- Keep dependencies updated
+
+## Getting Help
+
+### Questions
+
+- Check existing documentation
+- Search closed issues
+- Ask in issue discussions
+
+### Reporting Bugs
+
+Include:
+- Steps to reproduce
+- Expected behavior
+- Actual behavior
+- Environment details (OS, Node version, etc.)
+- Screenshots or error logs
+
+### Suggesting Features
+
+Describe:
+- The problem it solves
+- Proposed solution
+- Alternatives considered
+- Implementation ideas
+
+## Code of Conduct
+
+### Be Respectful
+
+- Use welcoming and inclusive language
+- Respect differing viewpoints
+- Accept constructive criticism gracefully
+- Focus on what's best for the community
+
+### Be Professional
+
+- Keep discussions on topic
+- Avoid personal attacks
+- Assume good intentions
+- Help others learn and grow
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the same license as the project.
+
+## Next Steps
+
+- Review [Code Style Guidelines](/contributing/code-style)
+- Learn about [Testing](/development/testing)
+- Explore [SSR Configuration](/development/ssr)

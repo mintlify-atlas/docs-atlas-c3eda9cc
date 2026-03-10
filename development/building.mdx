@@ -1,0 +1,184 @@
+---
+title: Building
+description: Learn how to build the Odontologia Frontend project for production and development
+---
+
+## Build Commands
+
+### Production Build
+
+Create an optimized production build:
+
+```bash
+npm run build
+```
+
+Or using Angular CLI:
+
+```bash
+ng build
+```
+
+The build artifacts will be stored in the `dist/odontologia-frontend/` directory.
+
+### Development Build with Watch
+
+Build in development mode with automatic rebuilds:
+
+```bash
+npm run watch
+```
+
+This runs `ng build --watch --configuration development`, which rebuilds the application whenever source files change.
+
+## Build Configurations
+
+The project defines two build configurations in `angular.json`:
+
+### Production Configuration
+
+Optimized for performance and size:
+
+```json
+{
+  "budgets": [
+    {
+      "type": "initial",
+      "maximumWarning": "500kB",
+      "maximumError": "1MB"
+    },
+    {
+      "type": "anyComponentStyle",
+      "maximumWarning": "4kB",
+      "maximumError": "8kB"
+    }
+  ],
+  "outputHashing": "all"
+}
+```
+
+Features:
+- **Output Hashing**: All files include content hashes for cache busting
+- **Budget Limits**: Enforces bundle size constraints
+  - Initial bundle: 500kB warning, 1MB error
+  - Component styles: 4kB warning, 8kB error
+- **Optimization**: Full minification and tree-shaking
+- **License Extraction**: Third-party licenses extracted
+
+### Development Configuration
+
+Optimized for debugging:
+
+```json
+{
+  "optimization": false,
+  "extractLicenses": false,
+  "sourceMap": true
+}
+```
+
+Features:
+- **No Optimization**: Faster builds, easier debugging
+- **Source Maps**: Full source map generation
+- **No License Extraction**: Faster build time
+
+## Build Architecture
+
+The project uses **@angular/build:application** builder with the following configuration:
+
+### Entry Points
+
+- **browser**: `src/main.ts` - Client-side application
+- **server**: `src/main.server.ts` - Server-side application
+- **ssr.entry**: `src/server.ts` - Express server entry
+
+### Output Mode
+
+The build uses `"outputMode": "server"`, which generates both browser and server bundles for SSR support.
+
+### Assets
+
+Static assets are copied from the `public/` directory:
+
+```json
+{
+  "assets": [
+    {
+      "glob": "**/*",
+      "input": "public"
+    }
+  ]
+}
+```
+
+### Styles
+
+Global styles are bundled in order:
+
+1. **Boxicons CSS**: `node_modules/boxicons/css/boxicons.min.css`
+2. **Application styles**: `src/styles.css`
+
+## Build Output Structure
+
+```
+dist/
+└── odontologia-frontend/
+    ├── browser/          # Client-side bundle
+    │   ├── index.html
+    │   ├── main.[hash].js
+    │   └── styles.[hash].css
+    └── server/           # Server-side bundle
+        └── server.mjs
+```
+
+## TypeScript Compilation
+
+The build uses TypeScript 5.9.2 with strict mode enabled:
+
+- **strict**: true
+- **noImplicitOverride**: true
+- **noPropertyAccessFromIndexSignature**: true
+- **noImplicitReturns**: true
+- **noFallthroughCasesInSwitch**: true
+- **strictInjectionParameters**: true (Angular)
+- **strictInputAccessModifiers**: true (Angular)
+- **strictTemplates**: true (Angular)
+
+### Target
+
+- **target**: ES2022
+- **module**: preserve
+
+## Bundle Budgets
+
+The production build enforces size budgets to maintain performance:
+
+| Bundle Type | Warning | Error |
+|------------|---------|-------|
+| Initial | 500kB | 1MB |
+| Component Style | 4kB | 8kB |
+
+If these limits are exceeded, the build will emit warnings or fail.
+
+## Serving the Production Build
+
+After building, serve the SSR application:
+
+```bash
+npm run serve:ssr:odontologia-frontend
+```
+
+This runs the Express server with the compiled application at `http://localhost:4000`.
+
+## Build Performance Tips
+
+1. **Use Development Configuration**: Faster builds during development
+2. **Enable Watch Mode**: Automatic rebuilds save time
+3. **Optimize Dependencies**: Keep dependencies up to date
+4. **Monitor Bundle Size**: Stay within budget limits
+
+## Next Steps
+
+- Configure [Server-Side Rendering](/development/ssr)
+- Review [Code Style Guidelines](/contributing/code-style)
+- Learn about [Contributing](/contributing/guidelines)

@@ -1,0 +1,300 @@
+---
+title: 'PatientService'
+description: 'Service for managing patient data, appointments, and treatment records'
+---
+
+## Overview
+
+The `PatientService` is an Angular injectable service that manages patient information including personal details, medical history, appointments, and treatments. It provides methods to retrieve and add patient records.
+
+## Interfaces
+
+### PatientData
+
+Represents a complete patient record with all associated information.
+
+```typescript
+export interface PatientData {
+  id: number;
+  nombre: string;
+  edad: number;
+  phone: string;
+  email: string;
+  address: string;
+  medication_allergies: string;
+  billing_data: string;
+  health_status: string;
+  family_history: string;
+  ultimaVisita: string;
+  proximaCita: string;
+  estado: string;
+  citas: Cita[];
+  tratamientos: Tratamiento[];
+}
+```
+
+<ResponseField name="id" type="number" required>
+  Unique identifier for the patient
+</ResponseField>
+
+<ResponseField name="nombre" type="string" required>
+  Full name of the patient
+</ResponseField>
+
+<ResponseField name="edad" type="number" required>
+  Age of the patient
+</ResponseField>
+
+<ResponseField name="phone" type="string" required>
+  Contact phone number
+</ResponseField>
+
+<ResponseField name="email" type="string" required>
+  Email address
+</ResponseField>
+
+<ResponseField name="address" type="string" required>
+  Physical address
+</ResponseField>
+
+<ResponseField name="medication_allergies" type="string" required>
+  Known medication allergies
+</ResponseField>
+
+<ResponseField name="billing_data" type="string" required>
+  Insurance or billing information
+</ResponseField>
+
+<ResponseField name="health_status" type="string" required>
+  Current health status description
+</ResponseField>
+
+<ResponseField name="family_history" type="string" required>
+  Family medical history
+</ResponseField>
+
+<ResponseField name="ultimaVisita" type="string" required>
+  Date of last visit
+</ResponseField>
+
+<ResponseField name="proximaCita" type="string" required>
+  Date of next appointment
+</ResponseField>
+
+<ResponseField name="estado" type="string" required>
+  Patient status (e.g., 'activo', 'pendiente', 'urgente')
+</ResponseField>
+
+<ResponseField name="citas" type="Cita[]" required>
+  Array of appointments associated with this patient
+</ResponseField>
+
+<ResponseField name="tratamientos" type="Tratamiento[]" required>
+  Array of treatments associated with this patient
+</ResponseField>
+
+### Cita
+
+Represents an appointment record.
+
+```typescript
+export interface Cita {
+  titulo: string;
+  fecha: string;
+  hora: string;
+  doctor: string;
+  estado: string;
+}
+```
+
+### Tratamiento
+
+Represents a treatment record for a patient.
+
+```typescript
+export interface Tratamiento {
+  titulo: string;
+  precio: number;
+  fecha: string;
+  doctor: string;
+  descripcion: string;
+}
+```
+
+## Methods
+
+### getPatients()
+
+Retrieves all patient records.
+
+```typescript
+getPatients(): PatientData[]
+```
+
+<ResponseField name="return" type="PatientData[]">
+  Array containing all patient records
+</ResponseField>
+
+<CodeGroup>
+```typescript Basic Usage
+import { PatientService } from './services/patient.service';
+
+export class PatientListComponent {
+  constructor(private patientService: PatientService) {}
+
+  loadPatients() {
+    const patients = this.patientService.getPatients();
+    console.log(`Found ${patients.length} patients`);
+  }
+}
+```
+
+```typescript Filter Active Patients
+const allPatients = this.patientService.getPatients();
+const activePatients = allPatients.filter(p => p.estado === 'activo');
+```
+
+```typescript Get Urgent Patients
+const urgentPatients = this.patientService.getPatients()
+  .filter(p => p.estado === 'urgente');
+```
+</CodeGroup>
+
+### getPatientById()
+
+Retrieves a specific patient by their ID.
+
+```typescript
+getPatientById(id: number): PatientData | undefined
+```
+
+<ParamField path="id" type="number" required>
+  The unique identifier of the patient to retrieve
+</ParamField>
+
+<ResponseField name="return" type="PatientData | undefined">
+  The patient record if found, otherwise undefined
+</ResponseField>
+
+<CodeGroup>
+```typescript Basic Usage
+const patient = this.patientService.getPatientById(1);
+
+if (patient) {
+  console.log(`Patient: ${patient.nombre}`);
+  console.log(`Email: ${patient.email}`);
+} else {
+  console.log('Patient not found');
+}
+```
+
+```typescript With Error Handling
+loadPatientDetails(patientId: number) {
+  const patient = this.patientService.getPatientById(patientId);
+  
+  if (!patient) {
+    this.showError('Patient not found');
+    return;
+  }
+  
+  this.displayPatientInfo(patient);
+}
+```
+</CodeGroup>
+
+### addPatient()
+
+Adds a new patient to the system.
+
+```typescript
+addPatient(patient: any): void
+```
+
+<ParamField path="patient" type="object" required>
+  Patient data object with the following properties:
+  - `first_name` (string): Patient's first name
+  - `last_name` (string): Patient's last name
+  - `edad` (number): Age
+  - `phone` (string): Phone number
+  - `email` (string): Email address
+  - `address` (string, optional): Physical address
+  - `medication_allergies` (string, optional): Known allergies
+  - `billing_data` (string, optional): Insurance information
+  - `health_status` (string, optional): Current health status
+  - `family_history` (string, optional): Family medical history
+</ParamField>
+
+<CodeGroup>
+```typescript Basic Usage
+const newPatient = {
+  first_name: 'Pedro',
+  last_name: 'Martínez',
+  edad: 38,
+  phone: '622 333 444',
+  email: 'pedro.martinez@email.com',
+  address: 'Calle Sol 15, Madrid',
+  medication_allergies: 'Ninguna',
+  billing_data: 'Sanitas - 456789',
+  health_status: 'Revisión general necesaria',
+  family_history: 'Ninguno relevante'
+};
+
+this.patientService.addPatient(newPatient);
+```
+
+```typescript Minimal Patient
+const minimalPatient = {
+  first_name: 'Laura',
+  last_name: 'Gómez',
+  edad: 25,
+  phone: '633 555 666',
+  email: 'laura.gomez@email.com'
+};
+
+this.patientService.addPatient(minimalPatient);
+// Missing fields will be set to default values
+```
+
+```typescript From Form Data
+onSubmitPatientForm(formData: any) {
+  this.patientService.addPatient(formData);
+  this.router.navigate(['/patients']);
+  this.showSuccess('Patient added successfully');
+}
+```
+</CodeGroup>
+
+## Usage Example
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { PatientService, PatientData } from './services/patient.service';
+
+@Component({
+  selector: 'app-patient-dashboard',
+  templateUrl: './patient-dashboard.component.html'
+})
+export class PatientDashboardComponent implements OnInit {
+  patients: PatientData[] = [];
+  urgentPatients: PatientData[] = [];
+
+  constructor(private patientService: PatientService) {}
+
+  ngOnInit() {
+    this.loadPatients();
+  }
+
+  loadPatients() {
+    this.patients = this.patientService.getPatients();
+    this.urgentPatients = this.patients.filter(p => p.estado === 'urgente');
+  }
+
+  viewPatientDetails(patientId: number) {
+    const patient = this.patientService.getPatientById(patientId);
+    if (patient) {
+      console.log('Appointments:', patient.citas.length);
+      console.log('Treatments:', patient.tratamientos.length);
+    }
+  }
+}
+```

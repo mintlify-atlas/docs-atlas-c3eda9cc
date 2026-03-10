@@ -1,0 +1,92 @@
+---
+title: Development Setup
+description: Set up your development environment for the Odontologia Frontend project
+---
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js**: Version 20.x or higher
+- **npm**: Version 11.6.1 or higher (specified as package manager)
+- **Angular CLI**: Version 21.1.4
+
+## Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd odontologia-frontend
+```
+
+### 2. Install Dependencies
+
+Install all required packages using npm:
+
+```bash
+npm install
+```
+
+This will install:
+- **Angular 21.1.0** - Core framework
+- **Express 5.1.0** - Server for SSR
+- **Vitest 4.0.8** - Testing framework
+- **RxJS 7.8.0** - Reactive programming library
+- **Boxicons 2.1.4** - Icon library
+
+### 3. Verify Installation
+
+Check that the Angular CLI is properly installed:
+
+```bash
+ng version
+```
+
+## Development Server
+
+Start the development server:
+
+```bash
+npm start
+```
+
+Or using Angular CLI directly:
+
+```bash
+ng serve
+```
+
+The application will be available at `http://localhost:4200/`. The server will automatically reload when you modify source files.
+
+## Project Structure
+
+The project follows the standard Angular application structure:
+
+- **src/** - Source code directory
+  - **main.ts** - Browser application entry point
+  - **main.server.ts** - Server-side rendering entry point
+  - **server.ts** - Express server configuration
+- **public/** - Static assets
+- **dist/** - Build output directory
+
+## Configuration Files
+
+- **angular.json** - Angular workspace configuration
+- **tsconfig.json** - TypeScript compiler configuration
+- **tsconfig.app.json** - Application-specific TypeScript config
+- **tsconfig.spec.json** - Test-specific TypeScript config
+- **package.json** - Project dependencies and scripts
+
+## Environment Configuration
+
+The project uses Angular's configuration system:
+
+- **Development**: Optimized for debugging with source maps
+- **Production**: Optimized for performance with hashing and minification
+
+## Next Steps
+
+- Learn about [Testing](/development/testing) with Vitest
+- Understand the [Build Process](/development/building)
+- Configure [Server-Side Rendering](/development/ssr)

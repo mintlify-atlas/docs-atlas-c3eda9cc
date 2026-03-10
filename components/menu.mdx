@@ -1,0 +1,410 @@
+---
+title: 'Menu Component'
+description: 'Collapsible sidebar navigation with route links'
+---
+
+## Overview
+
+The `Menu` component provides a collapsible sidebar navigation that allows users to navigate between different sections of the application. It features a logo, navigation links with icons, and a user profile section.
+
+## Component Definition
+
+<ParamField path="selector" type="string" default="app-menu">
+  The CSS selector used to include this component in templates
+</ParamField>
+
+<ParamField path="standalone" type="boolean" default={true}>
+  Standalone component with explicit imports
+</ParamField>
+
+<ParamField path="imports" type="array">
+  Dependencies: `RouterLink`, `RouterLinkActive`
+</ParamField>
+
+## Source Code Location
+
+**File**: `src/app/menu/menu.ts:5`
+
+<CodeGroup>
+
+```typescript menu.ts
+import { Component, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+
+@Component({
+  selector: 'app-menu',
+  imports: [RouterLink, RouterLinkActive],
+  templateUrl: './menu.html',
+  styleUrl: './menu.css',
+})
+export class Menu {
+  protected isCollapsed = signal(false);
+
+  protected toggleMenu() {
+    this.isCollapsed.set(!this.isCollapsed());
+  }
+}
+```
+
+```html menu.html
+<nav class="sidebar" [class.collapsed]="isCollapsed()">
+    <header>
+        <div class="logo-details">
+            <img src="logo.png" alt="Logo" class="logo-img">
+            <span class="logo_name">Odontologia</span>
+        </div>
+        <i class="icon bx" [class.bx-menu-alt-right]="isCollapsed()" 
+           [class.bx-menu]="!isCollapsed()" id="btn"
+           (click)="toggleMenu()"></i>
+    </header>
+
+    <ul class="menu">
+        <li routerLink="/home" routerLinkActive="active">
+            <i class="icon bx bx-grid-alt"></i>
+            <span class="link_name">Dashboard</span>
+        </li>
+
+        <li routerLink="/patient" routerLinkActive="active">
+            <i class="icon bx bx-user"></i>
+            <span class="link_name">Pacientes</span>
+        </li>
+
+        <li routerLink="/citas" routerLinkActive="active">
+            <i class="icon bx bx-time"></i>
+            <span class="link_name">Citas</span>
+        </li>
+
+        <li routerLink="/calendar" routerLinkActive="active">
+            <i class="icon bx bx-calendar"></i>
+            <span class="link_name">Calendario</span>
+        </li>
+
+        <li routerLink="/tratamientos" routerLinkActive="active">
+            <i class="icon bx bx-file"></i>
+            <span class="link_name">Tratamientos</span>
+        </li>
+    </ul>
+
+    <div class="profile">
+        <i class="icon bx bx-user-circle"></i>
+        <div class="profile-details">
+            <p class="name">Dr. Admin</p>
+            <p class="role">Administrador</p>
+        </div>
+    </div>
+</nav>
+```
+
+</CodeGroup>
+
+## Properties
+
+### isCollapsed
+
+<ParamField path="isCollapsed" type="WritableSignal<boolean>" default={false}>
+  Controls the collapsed/expanded state of the sidebar menu
+</ParamField>
+
+The `isCollapsed` signal determines whether the sidebar shows full navigation labels or only icons.
+
+**Implementation**: `src/app/menu/menu.ts:11`
+
+## Methods
+
+### toggleMenu()
+
+<ParamField path="toggleMenu" type="() => void">
+  Toggles the sidebar between collapsed and expanded states
+</ParamField>
+
+```typescript
+protected toggleMenu() {
+  this.isCollapsed.set(!this.isCollapsed());
+}
+```
+
+This method is called when the user clicks the menu toggle button.
+
+**Implementation**: `src/app/menu/menu.ts:13-15`
+
+## Template Structure
+
+The menu is organized into three main sections:
+
+### Header Section
+
+<ResponseField name="logo-details" type="div">
+  Contains the application logo and name
+</ResponseField>
+
+<ResponseField name="toggle-button" type="i">
+  Menu icon button that changes between `bx-menu` and `bx-menu-alt-right` based on collapse state
+</ResponseField>
+
+### Navigation Menu
+
+The menu includes five navigation items:
+
+<Tabs>
+  <Tab title="Dashboard">
+    **Route**: `/home`
+    
+    **Icon**: `bx-grid-alt`
+    
+    Overview and statistics
+  </Tab>
+  <Tab title="Pacientes">
+    **Route**: `/patient`
+    
+    **Icon**: `bx-user`
+    
+    Patient management
+  </Tab>
+  <Tab title="Citas">
+    **Route**: `/citas`
+    
+    **Icon**: `bx-time`
+    
+    Appointment list view
+  </Tab>
+  <Tab title="Calendario">
+    **Route**: `/calendar`
+    
+    **Icon**: `bx-calendar`
+    
+    Calendar view of appointments
+  </Tab>
+  <Tab title="Tratamientos">
+    **Route**: `/tratamientos`
+    
+    **Icon**: `bx-file`
+    
+    Treatment records
+  </Tab>
+</Tabs>
+
+### Profile Section
+
+<ResponseField name="profile" type="div">
+  Displays user information at the bottom of the sidebar:
+  - User icon (`bx-user-circle`)
+  - Name: "Dr. Admin"
+  - Role: "Administrador"
+</ResponseField>
+
+## Router Integration
+
+The component uses Angular Router directives for navigation:
+
+### routerLink
+
+```html
+<li routerLink="/patient">
+```
+
+The `routerLink` directive enables navigation to specified routes when the list item is clicked.
+
+### routerLinkActive
+
+```html
+<li routerLink="/patient" routerLinkActive="active">
+```
+
+The `routerLinkActive` directive automatically adds the "active" class to the menu item when its route matches the current URL.
+
+## Usage
+
+The Menu component is included in the main app layout:
+
+<CodeGroup>
+
+```typescript app.ts
+import { Component, computed, inject } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
+import { Menu } from './menu/menu';
+import { HeaderComponent } from './header/header';
+
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet, Menu, HeaderComponent],
+  templateUrl: './app.html',
+  styleUrl: './app.css'
+})
+export class App {
+  protected showMenu = computed(() => {
+    // Hide menu on login page
+    return !this.router.url.includes('/login');
+  });
+}
+```
+
+```html app.html
+<div class="app-layout">
+  <app-menu *ngIf="showMenu()"></app-menu>
+  <div class="main-content">
+    <app-header></app-header>
+    <router-outlet></router-outlet>
+  </div>
+</div>
+```
+
+</CodeGroup>
+
+## Dynamic Class Binding
+
+The sidebar uses Angular's class binding to toggle the collapsed state:
+
+```html
+<nav class="sidebar" [class.collapsed]="isCollapsed()">
+```
+
+When `isCollapsed()` returns `true`, the "collapsed" class is added to the sidebar, triggering CSS transitions.
+
+### Toggle Icon
+
+The toggle button icon changes based on the collapsed state:
+
+```html
+<i class="icon bx" 
+   [class.bx-menu-alt-right]="isCollapsed()" 
+   [class.bx-menu]="!isCollapsed()"
+   (click)="toggleMenu()"></i>
+```
+
+- **Expanded**: Shows `bx-menu` icon
+- **Collapsed**: Shows `bx-menu-alt-right` icon
+
+## Styling Behavior
+
+The menu uses CSS transitions for smooth collapse/expand animations:
+
+<Tabs>
+  <Tab title="Expanded State">
+    - Full width sidebar (typically 250px)
+    - Navigation labels visible
+    - Profile details displayed
+  </Tab>
+  <Tab title="Collapsed State">
+    - Narrow sidebar (typically 70px)
+    - Only icons visible
+    - Labels and profile details hidden
+  </Tab>
+  <Tab title="Active State">
+    - Active menu item highlighted
+    - Different background color
+    - Border or accent indicator
+  </Tab>
+</Tabs>
+
+## Icon Library
+
+The component uses Boxicons for all icons. The icon classes follow the pattern:
+
+- `bx`: Base Boxicons class
+- `bx-[icon-name]`: Specific icon (e.g., `bx-user`, `bx-calendar`)
+
+**Documentation**: [Boxicons](https://boxicons.com/)
+
+## Customization
+
+### Add New Menu Item
+
+To add a new navigation link, add a list item to the menu:
+
+```html
+<li routerLink="/reports" routerLinkActive="active">
+    <i class="icon bx bx-bar-chart"></i>
+    <span class="link_name">Reportes</span>
+</li>
+```
+
+### Change Logo
+
+Replace the logo image source in `menu.html:4`:
+
+```html
+<img src="your-logo.png" alt="Logo" class="logo-img">
+```
+
+### Dynamic User Profile
+
+Replace static profile information with dynamic data:
+
+<CodeGroup>
+
+```typescript menu.ts
+export class Menu {
+  private readonly userService = inject(UserService);
+  protected readonly currentUser = this.userService.currentUser;
+
+  protected isCollapsed = signal(false);
+
+  protected toggleMenu() {
+    this.isCollapsed.set(!this.isCollapsed());
+  }
+}
+```
+
+```html menu.html
+<div class="profile">
+    <i class="icon bx bx-user-circle"></i>
+    <div class="profile-details">
+        <p class="name">{{ currentUser().name }}</p>
+        <p class="role">{{ currentUser().role }}</p>
+    </div>
+</div>
+```
+
+</CodeGroup>
+
+### Persist Collapsed State
+
+Store the collapsed state in localStorage:
+
+```typescript
+export class Menu implements OnInit {
+  protected isCollapsed = signal(false);
+
+  ngOnInit() {
+    const stored = localStorage.getItem('menuCollapsed');
+    if (stored !== null) {
+      this.isCollapsed.set(stored === 'true');
+    }
+  }
+
+  protected toggleMenu() {
+    const newState = !this.isCollapsed();
+    this.isCollapsed.set(newState);
+    localStorage.setItem('menuCollapsed', String(newState));
+  }
+}
+```
+
+## Accessibility
+
+Consider adding ARIA attributes for better accessibility:
+
+```html
+<nav class="sidebar" 
+     [class.collapsed]="isCollapsed()"
+     role="navigation"
+     aria-label="Main navigation">
+  <button (click)="toggleMenu()" 
+          aria-label="Toggle menu"
+          [attr.aria-expanded]="!isCollapsed()">
+    <i class="icon bx" ...></i>
+  </button>
+  <!-- menu items -->
+</nav>
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Header" icon="heading" href="/components/header">
+    Top navigation bar component
+  </Card>
+  <Card title="Architecture" icon="home" href="/concepts/architecture">
+    Main application layout
+  </Card>
+</CardGroup>

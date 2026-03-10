@@ -1,0 +1,205 @@
+---
+title: 'Authentication'
+description: 'User authentication and role-based access control in the Odontología Frontend application'
+icon: 'lock'
+---
+
+## Overview
+
+The authentication system provides secure access control with role-based permissions for dental clinic staff. The application supports two user roles: dentists and receptionists, each with specific access levels.
+
+## User Roles
+
+The system currently supports two predefined user roles:
+
+<CardGroup cols={2}>
+  <Card title="Dentista" icon="user-doctor">
+    Full access to patient records, treatments, and appointments
+  </Card>
+  <Card title="Recepcionista" icon="user">
+    Access to appointment scheduling and patient basic information
+  </Card>
+</CardGroup>
+
+## Authentication Flow
+
+<Steps>
+  <Step title="User Login">
+    Users enter their email and password credentials on the login page
+  </Step>
+  <Step title="Validation">
+    The system validates credentials against the user database
+  </Step>
+  <Step title="Role Assignment">
+    Upon successful login, the user's role is stored in localStorage
+  </Step>
+  <Step title="Navigation">
+    Users are redirected to the home dashboard
+  </Step>
+</Steps>
+
+## Login Component
+
+The login functionality is implemented in `src/app/login/login.ts`. Here's the core implementation:
+
+### Component Structure
+
+```typescript
+import { Component, inject } from '@angular/core';
+import { FormGroup, Validators, FormControl } from '@angular/forms';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [ReactiveFormsModule],
+  templateUrl: './login.html',
+  styleUrl: './login.css',
+})
+export class LoginComponent {
+  loginForm: FormGroup;
+  errorMessage: string = '';
+
+  // Test users
+  users = [
+    { email: 'dentista@clinica.com', password: '123', role: 'dentista' },
+    { email: 'recepcionista@clinica.com', password: '123', role: 'recepcionista' }
+  ];
+
+  private router = inject(Router);
+}
+```
+
+### Form Validation
+
+The login form uses Angular's reactive forms with built-in validators:
+
+```typescript
+this.loginForm = new FormGroup({
+  email: new FormControl('', [Validators.required, Validators.email]),
+  password: new FormControl('', Validators.required),
+  remember: new FormControl(false)
+});
+```
+
+<Note>
+  The email field includes both required and email format validation, ensuring proper input before authentication attempts.
+</Note>
+
+### Login Handler
+
+The authentication logic is handled by the `handleLogin()` method:
+
+```typescript
+handleLogin() {
+  this.errorMessage = '';
+
+  if (this.loginForm.invalid) {
+    this.errorMessage = 'Datos incompletos o correo no válido.';
+    return;
+  }
+
+  const { email, password } = this.loginForm.value;
+  const user = this.users.find(u => 
+    u.email === email && u.password === password
+  );
+
+  if (user) {
+    // Store user role in localStorage
+    localStorage.setItem('userRole', user.role);
+    
+    // Navigate to home page
+    this.router.navigate(['/home']).then(navigated => {
+      if (navigated) {
+        console.log('Navegación al Home exitosa');
+      }
+    });
+  } else {
+    this.errorMessage = 'Correo o contraseña incorrectos.';
+  }
+}
+```
+
+## Session Management
+
+User sessions are managed through browser localStorage:
+
+- **Storage**: User role is stored upon successful login
+- **Key**: `userRole`
+- **Values**: `'dentista'` or `'recepcionista'`
+
+### Accessing Current User Role
+
+```typescript
+const userRole = localStorage.getItem('userRole');
+
+if (userRole === 'dentista') {
+  // Full access permissions
+} else if (userRole === 'recepcionista') {
+  // Limited access permissions
+}
+```
+
+## Test Credentials
+
+For development and testing purposes, the following credentials are available:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Dentista | dentista@clinica.com | 123 |
+| Recepcionista | recepcionista@clinica.com | 123 |
+
+<Warning>
+  These are hardcoded test credentials. In a production environment, implement proper authentication with a backend service and secure password storage.
+</Warning>
+
+## Error Handling
+
+The authentication system provides clear error messages:
+
+- **Invalid form data**: "Datos incompletos o correo no válido."
+- **Invalid credentials**: "Correo o contraseña incorrectos."
+- **Navigation errors**: Logged to console for debugging
+
+## Routing Configuration
+
+Authentication routes are defined in `src/app/app.routes.ts`:
+
+```typescript
+export const routes: Routes = [
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent, data: { title: 'Acceso' } },
+  { path: 'home', component: HomeComponent, data: { title: 'Panel de Control' } },
+  // ... other routes
+];
+```
+
+## Security Considerations
+
+<Note>
+  **Current Implementation**: The current authentication is client-side only and suitable for prototyping.
+  
+  **Production Requirements**:
+  - Implement server-side authentication
+  - Use secure password hashing (bcrypt, Argon2)
+  - Implement JWT or session-based authentication
+  - Add HTTPS enforcement
+  - Implement proper CSRF protection
+  - Add rate limiting for login attempts
+</Note>
+
+## Next Steps
+
+To enhance the authentication system:
+
+1. Integrate with a backend authentication service
+2. Implement token-based authentication (JWT)
+3. Add password reset functionality
+4. Implement multi-factor authentication (MFA)
+5. Add session timeout and auto-logout
+6. Create route guards based on user roles
+
+## Related Components
+
+- [Patient Management](/features/patient-management) - Access controlled by user role
+- [Appointment Scheduling](/features/appointment-scheduling) - Available to all authenticated users

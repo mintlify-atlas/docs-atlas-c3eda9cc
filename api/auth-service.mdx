@@ -1,0 +1,88 @@
+---
+title: 'Auth'
+description: 'Authentication service for user management and access control'
+---
+
+## Overview
+
+The `Auth` service is an Angular injectable service that provides authentication functionality for the application. This service is currently a placeholder and will be expanded with authentication methods in future implementations.
+
+## Service Declaration
+
+```typescript
+import { Injectable } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class Auth {
+  
+}
+```
+
+## Current Status
+
+The Auth service is currently empty and serves as a foundation for future authentication features. This service will be expanded to include methods for:
+
+- User login and logout
+- Token management
+- Session handling
+- User authentication state
+- Role-based access control
+
+## Usage
+
+To use this service in your components, inject it through the constructor:
+
+```typescript
+import { Component } from '@angular/core';
+import { Auth } from './services/auth';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html'
+})
+export class LoginComponent {
+  constructor(private auth: Auth) {}
+
+  // Future authentication methods will be called here
+}
+```
+
+## Future Implementation
+
+This service is designed to be extended with authentication functionality. A typical implementation might include:
+
+<CodeGroup>
+```typescript Login Method (Future)
+// This is a conceptual example of future implementation
+login(username: string, password: string): Observable<boolean> {
+  // Authentication logic
+}
+```
+
+```typescript Logout Method (Future)
+// This is a conceptual example of future implementation
+logout(): void {
+  // Logout logic
+}
+```
+
+```typescript Token Management (Future)
+// This is a conceptual example of future implementation
+getToken(): string | null {
+  // Return authentication token
+}
+```
+
+```typescript Auth State (Future)
+// This is a conceptual example of future implementation
+isAuthenticated(): boolean {
+  // Check if user is authenticated
+}
+```
+</CodeGroup>
+
+<Note>
+The Auth service is currently under development. Check back for updates as authentication features are implemented.
+</Note>

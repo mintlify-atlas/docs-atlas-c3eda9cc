@@ -1,0 +1,202 @@
+---
+title: Introduction
+description: Welcome to Odontología Frontend - A comprehensive dental clinic management system built with Angular 21
+---
+
+## Overview
+
+Odontología Frontend is a modern, full-featured dental clinic management application built with Angular 21. It provides a complete solution for managing patient records, appointments, treatments, and clinical workflows in a dental practice.
+
+<Note>
+  This application uses Angular's latest standalone components architecture with server-side rendering (SSR) support for optimal performance.
+</Note>
+
+## Key Features
+
+The application offers comprehensive functionality for dental clinic operations:
+
+<CardGroup cols={2}>
+  <Card title="Patient Management" icon="users">
+    Complete patient database with medical history, allergies, billing information, and family health records
+  </Card>
+  <Card title="Appointment Scheduling" icon="calendar">
+    Visual calendar interface for managing patient appointments and dental consultations
+  </Card>
+  <Card title="Treatment Tracking" icon="notes-medical">
+    Detailed treatment records with pricing, dates, and doctor assignments
+  </Card>
+  <Card title="Role-Based Access" icon="user-shield">
+    Separate authentication for dentists and receptionists with appropriate permissions
+  </Card>
+</CardGroup>
+
+## Application Structure
+
+The application is organized into distinct functional modules:
+
+### Core Modules
+
+- **Authentication** (`/login`) - Secure login system with role-based access control
+- **Dashboard** (`/home`) - Central control panel with quick access to key functions
+- **Patient Management** (`/patient`) - Patient list, search, and detailed patient profiles
+- **Appointments** (`/citas`) - Appointment management and scheduling
+- **Calendar** (`/calendar`) - Visual calendar view for appointment planning
+- **Treatments** (`/tratamientos`) - Treatment database and management
+
+### Routing Configuration
+
+The application uses Angular's modern routing system with standalone components:
+
+```typescript
+export const routes: Routes = [
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent, data: { title: 'Acceso' } },
+  { path: 'home', component: HomeComponent, data: { title: 'Panel de Control' } },
+  { path: 'patient', component: Patient, data: { title: 'Listado de Pacientes' } },
+  { path: 'patient/new', component: NewPatient, data: { title: 'Nuevo Paciente' } },
+  { path: 'patient/:id', component: PacienteDetail, data: { title: 'Detalle de Paciente' } },
+  { path: 'tratamientos', component: Tratamientos, data: { title: 'Gestión de Tratamientos' } },
+  { path: 'citas', component: Appointment, data: { title: 'Citas Médicas' } },
+  { path: 'calendar', component: Calendar, data: { title: 'Calendario de Citas' } }
+];
+```
+
+## Architecture Highlights
+
+### Modern Angular Features
+
+Odontología Frontend leverages the latest Angular capabilities:
+
+- **Standalone Components** - No NgModules required, simpler dependency management
+- **Signals & Computed Values** - Reactive state management with fine-grained reactivity
+- **Server-Side Rendering (SSR)** - Improved performance and SEO with Angular Universal
+- **TypeScript 5.9** - Latest TypeScript features with strict type checking
+- **Vitest Testing** - Fast unit testing with modern test runner
+
+### State Management
+
+The application uses Angular services for state management:
+
+```typescript
+@Injectable({
+  providedIn: 'root'
+})
+export class PatientService {
+  getPatients(): PatientData[] { }
+  getPatientById(id: number): PatientData | undefined { }
+  addPatient(patient: any): void { }
+}
+```
+
+### Data Models
+
+Comprehensive TypeScript interfaces define the data structure:
+
+```typescript
+export interface PatientData {
+  id: number;
+  nombre: string;
+  edad: number;
+  phone: string;
+  email: string;
+  address: string;
+  medication_allergies: string;
+  billing_data: string;
+  health_status: string;
+  family_history: string;
+  ultimaVisita: string;
+  proximaCita: string;
+  estado: string;
+  citas: Cita[];
+  tratamientos: Tratamiento[];
+}
+```
+
+## Technology Stack
+
+<CardGroup cols={3}>
+  <Card title="Angular 21.1.0" icon="angular">
+    Latest Angular framework with standalone components
+  </Card>
+  <Card title="TypeScript 5.9" icon="code">
+    Strict type checking and modern JS features
+  </Card>
+  <Card title="RxJS 7.8" icon="stream">
+    Reactive programming for async operations
+  </Card>
+  <Card title="Express 5.1" icon="server">
+    SSR server for production deployment
+  </Card>
+  <Card title="Boxicons" icon="icons">
+    Modern icon library for UI elements
+  </Card>
+  <Card title="Vitest 4.0" icon="vial">
+    Fast and modern testing framework
+  </Card>
+</CardGroup>
+
+## User Roles
+
+The system supports two distinct user roles:
+
+### Dentist Role
+- Full access to patient medical records
+- Treatment planning and documentation
+- Appointment management
+- Clinical notes and history
+
+**Test Credentials:**
+```
+Email: dentista@clinica.com
+Password: 123
+```
+
+### Receptionist Role
+- Appointment scheduling
+- Patient registration
+- Basic patient information management
+- Calendar coordination
+
+**Test Credentials:**
+```
+Email: recepcionista@clinica.com
+Password: 123
+```
+
+<Warning>
+  The credentials above are for development/testing purposes only. In production, implement proper authentication with secure password hashing.
+</Warning>
+
+## Design Philosophy
+
+Odontología Frontend follows modern web development best practices:
+
+- **Component-Based Architecture** - Reusable, maintainable UI components
+- **Type Safety** - Comprehensive TypeScript interfaces for all data structures
+- **Responsive Design** - Mobile-first approach for all screen sizes
+- **Accessibility** - WCAG-compliant UI elements
+- **Performance** - SSR and optimized bundle sizes (< 1MB)
+
+## Next Steps
+
+<Steps>
+  <Step title="Installation">
+    Set up your development environment and install dependencies
+    
+    [View Installation Guide →](/installation)
+  </Step>
+  <Step title="Quick Start">
+    Get the application running locally in minutes
+    
+    [View Quick Start →](/quickstart)
+  </Step>
+  <Step title="Configuration">
+    Learn how to configure the application for your clinic
+    
+    [View Configuration →](/configuration)
+  </Step>
+</Steps>
+
+## Support & Contributing
+
+Odontología Frontend is built with Angular CLI 21.1.4. For detailed information about Angular features and CLI commands, visit the [Angular CLI Documentation](https://angular.dev/tools/cli).

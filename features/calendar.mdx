@@ -1,0 +1,468 @@
+---
+title: 'Calendar'
+description: 'Visual weekly calendar view for managing appointments and schedule optimization'
+icon: 'calendar-days'
+---
+
+## Overview
+
+The Calendar feature provides a visual weekly view of all appointments, making it easy to see availability, manage schedules, and create new appointments. The calendar displays appointments in a time-grid format with support for drag-and-drop style scheduling.
+
+## Calendar Data Model
+
+The calendar uses the `CalendarDay` interface to represent each day in the weekly view:
+
+```typescript
+interface CalendarDay {
+  date: Date;                      // The calendar date
+  isCurrentMonth: boolean;         // Whether date is in current month
+  isToday: boolean;                // Highlights current day
+  appointments: AppointmentData[]; // Appointments for this day
+}
+```
+
+## Calendar Component
+
+The main calendar implementation is in `src/app/calendar/calendar.ts`:
+
+### Component Structure
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { AppointmentService, AppointmentData } from '../services/appointment.service';
+
+@Component({
+  selector: 'app-calendar',
+  standalone: true,
+  imports: [CommonModule, NewAppointment],
+  templateUrl: './calendar.html',
+  styleUrl: './calendar.css',
+})
+export class Calendar implements OnInit {
+  currentDate: Date = new Date();
+  days: CalendarDay[] = [];
+  weekDays: string[] = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  showNewAppointmentModal: boolean = false;
+  selectedDateForNewAppointment: string = '';
+  hours: string[] = [
+    '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
+    '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
+  ];
+
+  constructor(private appointmentService: AppointmentService) { }
+
+  ngOnInit(): void {
+    this.generateCalendar();
+  }
+}
+```
+
+## Calendar Generation
+
+The calendar generates a weekly view starting from Monday:
+
+### Week Calculation
+
+```typescript
+generateCalendar(): void {
+  const year = this.currentDate.getFullYear();
+  const month = this.currentDate.getMonth();
+  const day = this.currentDate.getDate();
+
+  const dateCopy = new Date(year, month, day);
+  let dayOfWeek = dateCopy.getDay();
+  
+  // Adjust to Monday start (0=Sun, 1=Mon...6=Sat)
+  let diff = dateCopy.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+  const startOfWeek = new Date(dateCopy.setDate(diff));
+
+  this.days = [];
+  const allAppointments = this.appointmentService.getAppointments();
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(
+      startOfWeek.getFullYear(), 
+      startOfWeek.getMonth(), 
+      startOfWeek.getDate() + i
+    );
+    const isToday = this.isSameDay(date, new Date());
+    const dayAppointments = allAppointments.filter(app => 
+      this.isAppointmentOnDay(app, date)
+    );
+
+    this.days.push({
+      date,
+      isCurrentMonth: true,
+      isToday,
+      appointments: dayAppointments
+    });
+  }
+}
+```
+
+<Steps>
+  <Step title="Calculate Start of Week">
+    Find the Monday of the current week
+  </Step>
+  <Step title="Generate 7 Days">
+    Create calendar entries for Monday through Sunday
+  </Step>
+  <Step title="Load Appointments">
+    Fetch all appointments from the service
+  </Step>
+  <Step title="Filter by Date">
+    Match appointments to their respective calendar days
+  </Step>
+</Steps>
+
+## Date Matching
+
+The calendar supports multiple date formats for appointment matching:
+
+### Appointment Date Parsing
+
+```typescript
+isAppointmentOnDay(app: AppointmentData, date: Date): boolean {
+  if (!app.fecha) return false;
+
+  // Handle YYYY-MM-DD format
+  if (app.fecha.includes('-')) {
+    const [y, m, d] = app.fecha.split('-').map(Number);
+    return d === date.getDate() && 
+           (m - 1) === date.getMonth() && 
+           y === date.getFullYear();
+  }
+
+  // Handle D/M/YYYY format
+  if (app.fecha.includes('/')) {
+    const [d, m, y] = app.fecha.split('/').map(Number);
+    return d === date.getDate() && 
+           (m - 1) === date.getMonth() && 
+           y === date.getFullYear();
+  }
+
+  return false;
+}
+```
+
+<Note>
+  The calendar intelligently handles both ISO format (YYYY-MM-DD) and Spanish format (D/M/YYYY) date strings.
+</Note>
+
+## Navigation
+
+The calendar provides intuitive week navigation:
+
+### Previous/Next Week
+
+```typescript
+prevWeek(): void {
+  this.currentDate.setDate(this.currentDate.getDate() - 7);
+  this.generateCalendar();
+}
+
+nextWeek(): void {
+  this.currentDate.setDate(this.currentDate.getDate() + 7);
+  this.generateCalendar();
+}
+```
+
+### Week Range Display
+
+```typescript
+getWeekRange(): string {
+  const start = this.days[0]?.date;
+  const end = this.days[6]?.date;
+  if (!start || !end) return '';
+
+  const formatMonth = new Intl.DateTimeFormat('es-ES', { month: 'short' });
+  const formatYear = new Intl.DateTimeFormat('es-ES', { year: 'numeric' });
+
+  if (start.getMonth() === end.getMonth()) {
+    return `${start.getDate()} - ${end.getDate()} ${formatMonth.format(start)} ${start.getFullYear()}`;
+  }
+  return `${start.getDate()} ${formatMonth.format(start)} - ${end.getDate()} ${formatMonth.format(end)} ${start.getFullYear()}`;
+}
+```
+
+Example outputs:
+- Same month: "1 - 7 mar 2026"
+- Across months: "28 feb - 6 mar 2026"
+
+## Time Grid Configuration
+
+The calendar displays appointments in hourly time slots:
+
+### Operating Hours
+
+```typescript
+hours: string[] = [
+  '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
+  '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
+];
+```
+
+<CardGroup cols={2}>
+  <Card title="Start Time" icon="sunrise">
+    08:00 - Morning appointments begin
+  </Card>
+  <Card title="End Time" icon="sunset">
+    20:00 - Evening appointments end
+  </Card>
+  <Card title="Duration" icon="clock">
+    12 hours - Full business day coverage
+  </Card>
+  <Card title="Intervals" icon="grid">
+    1 hour - Clear hourly divisions
+  </Card>
+</CardGroup>
+
+## Visual Positioning
+
+Appointments are positioned on the calendar based on their time:
+
+### Calculate Vertical Position
+
+```typescript
+getAppointmentTop(time: string): string {
+  const [hours, minutes] = time.split(':').map(Number);
+  const startHour = 8;  // Calendar starts at 08:00
+  const hourHeight = 60; // 60px per hour in CSS
+  
+  const top = (hours - startHour) * hourHeight + 
+              (minutes / 60) * hourHeight;
+  
+  return `${top}px`;
+}
+```
+
+**Example Calculations:**
+- 09:00 → (9-8) * 60 = 60px
+- 09:30 → (9-8) * 60 + (30/60) * 60 = 90px
+- 14:15 → (14-8) * 60 + (15/60) * 60 = 375px
+
+<Note>
+  The positioning system assumes each hour occupies 60px in height. Adjust the `hourHeight` constant if your CSS uses different sizing.
+</Note>
+
+## Creating Appointments from Calendar
+
+The calendar allows quick appointment creation with date pre-filled:
+
+### Open New Appointment Dialog
+
+```typescript
+openNewAppointment(date?: Date): void {
+  if (date) {
+    // Format as YYYY-MM-DD for HTML date input
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    this.selectedDateForNewAppointment = `${y}-${m}-${d}`;
+  } else {
+    this.selectedDateForNewAppointment = '';
+  }
+  this.showNewAppointmentModal = true;
+}
+```
+
+### Handle Appointment Creation
+
+```typescript
+closeNewAppointment(): void {
+  this.showNewAppointmentModal = false;
+}
+
+onAppointmentCreated(): void {
+  this.generateCalendar();  // Refresh calendar data
+  this.closeNewAppointment();
+}
+```
+
+<Steps>
+  <Step title="User Clicks Date">
+    Click on any day in the calendar
+  </Step>
+  <Step title="Modal Opens">
+    New appointment form opens with date pre-filled
+  </Step>
+  <Step title="Fill Details">
+    User enters patient, time, doctor, and treatment
+  </Step>
+  <Step title="Save Appointment">
+    Appointment is created and calendar refreshes
+  </Step>
+</Steps>
+
+## Today Highlighting
+
+The current day is automatically highlighted for easy reference:
+
+```typescript
+isSameDay(date1: Date, date2: Date): boolean {
+  return date1.getDate() === date2.getDate() &&
+         date1.getMonth() === date2.getMonth() &&
+         date1.getFullYear() === date2.getFullYear();
+}
+```
+
+This method is used during calendar generation to set the `isToday` flag:
+
+```typescript
+const isToday = this.isSameDay(date, new Date());
+```
+
+## Routing Configuration
+
+Calendar route in `src/app/app.routes.ts`:
+
+```typescript
+{ 
+  path: 'calendar', 
+  component: Calendar, 
+  data: { title: 'Calendario de Citas' } 
+}
+```
+
+## Integration with Appointments
+
+The calendar seamlessly integrates with the appointment system:
+
+### Appointment Display
+- All appointments from `AppointmentService` are displayed
+- Appointments automatically filtered by date
+- Multiple appointments per day are supported
+- Time conflicts are visually apparent
+
+### Real-time Updates
+- Calendar refreshes after new appointments
+- Changes in appointments reflect immediately
+- Status changes are visible in calendar view
+
+## Usage Examples
+
+### Navigate to Specific Week
+
+```typescript
+// Go to next week
+this.nextWeek();
+
+// Go to previous week
+this.prevWeek();
+```
+
+### Check Today's Appointments
+
+```typescript
+const today = this.days.find(d => d.isToday);
+if (today) {
+  console.log(`Appointments today: ${today.appointments.length}`);
+  today.appointments.forEach(apt => {
+    console.log(`${apt.hora} - ${apt.paciente} (${apt.tratamiento})`);
+  });
+}
+```
+
+### Get Week's Total Appointments
+
+```typescript
+const totalAppointments = this.days.reduce(
+  (sum, day) => sum + day.appointments.length, 
+  0
+);
+console.log(`Total appointments this week: ${totalAppointments}`);
+```
+
+### Find Available Time Slots
+
+```typescript
+function findAvailableSlots(day: CalendarDay, hours: string[]): string[] {
+  const bookedTimes = day.appointments.map(a => a.hora);
+  return hours.filter(hour => !bookedTimes.includes(hour));
+}
+
+const availableToday = findAvailableSlots(this.days.find(d => d.isToday)!, this.hours);
+console.log('Available slots:', availableToday);
+```
+
+## Responsive Design Considerations
+
+<CardGroup cols={2}>
+  <Card title="Desktop View" icon="desktop">
+    Full week view with all time slots visible
+  </Card>
+  <Card title="Tablet View" icon="tablet">
+    Scrollable week view with compressed layout
+  </Card>
+  <Card title="Mobile View" icon="mobile">
+    Single day view with swipe navigation
+  </Card>
+  <Card title="Print View" icon="print">
+    Optimized layout for printing schedules
+  </Card>
+</CardGroup>
+
+## Performance Optimization
+
+### Efficient Date Filtering
+
+The calendar only loads appointments once per generation:
+
+```typescript
+const allAppointments = this.appointmentService.getAppointments();
+// Then filters for each day in memory
+```
+
+### Computed Properties
+
+Uses Angular's change detection efficiently:
+- Calendar days computed during generation
+- No unnecessary recalculations
+- Minimal DOM updates
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Visual Clarity" icon="eye">
+    Use colors to differentiate appointment types and statuses
+  </Card>
+  <Card title="Time Slots" icon="clock">
+    Maintain consistent time slot sizing for easy scanning
+  </Card>
+  <Card title="Overflow Handling" icon="ellipsis">
+    Handle overlapping appointments gracefully
+  </Card>
+  <Card title="Quick Actions" icon="bolt">
+    Provide hover actions for appointment management
+  </Card>
+</CardGroup>
+
+## Future Enhancements
+
+- **Month View**: Add monthly calendar option
+- **Day View**: Detailed single-day view with more information
+- **Drag & Drop**: Move appointments by dragging
+- **Resize**: Adjust appointment duration by dragging edges
+- **Color Coding**: Different colors for treatment categories
+- **Doctor Filter**: Filter appointments by doctor
+- **Print Layout**: Optimized printing of weekly schedules
+- **Export**: Export calendar to iCal, Google Calendar
+- **Conflict Detection**: Visual warnings for double-bookings
+- **Availability Blocks**: Mark doctor unavailable times
+- **Recurring Events**: Support for recurring appointments
+- **Time Zone Support**: Multi-location clinic support
+
+## Accessibility Features
+
+Consider implementing:
+- Keyboard navigation (arrow keys for dates)
+- Screen reader support for appointment details
+- High contrast mode for visibility
+- Focus indicators for interactive elements
+- ARIA labels for semantic structure
+
+## Related Features
+
+- [Appointment Scheduling](/features/appointment-scheduling) - Create and manage appointments
+- [Patient Management](/features/patient-management) - View patient appointment history
+- [Treatment Tracking](/features/treatment-tracking) - Treatment duration impacts scheduling

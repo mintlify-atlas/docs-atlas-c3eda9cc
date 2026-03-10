@@ -1,0 +1,288 @@
+---
+title: 'Header Component'
+description: 'Dynamic header with page titles and user information'
+---
+
+## Overview
+
+The `HeaderComponent` provides a consistent top navigation bar across all pages of the application. It displays dynamic page titles based on the current route and includes user information and search functionality.
+
+## Component Definition
+
+<ParamField path="selector" type="string" default="app-header">
+  The CSS selector used to include this component in templates
+</ParamField>
+
+<ParamField path="standalone" type="boolean" default={true}>
+  This is a standalone component that can be imported directly
+</ParamField>
+
+<ParamField path="imports" type="array">
+  Dependencies: `CommonModule`
+</ParamField>
+
+## Source Code Location
+
+**File**: `src/app/header/header.ts:8`
+
+<CodeGroup>
+
+```typescript header.ts
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
+import { filter, map, mergeMap } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
+
+@Component({
+  selector: 'app-header',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './header.html',
+  styleUrl: './header.css'
+})
+export class HeaderComponent {
+  private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
+
+  public readonly title = toSignal(
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map(() => this.activatedRoute),
+      map(route => {
+        while (route.firstChild) {
+          route = route.firstChild;
+        }
+        return route;
+      }),
+      mergeMap(route => route.data),
+      map(data => data['title'] || 'Odontologia')
+    ),
+    { initialValue: 'Odontologia' }
+  );
+}
+```
+
+```html header.html
+<header class="header-container">
+    <div class="header-info">
+        <span class="welcome-msg">¡Hola, Dr. Admin! 👋</span>
+        <h1 class="section-title">{{ title() }}</h1>
+    </div>
+    <div class="header-actions">
+        <div class="search-bar">
+            <i class="bx bx-search"></i>
+            <input type="text" placeholder="Buscar pacientes, citas...">
+        </div>
+        <div class="user-snippet">
+            <div class="user-avatar">AD</div>
+            <i class="bx bx-bell" style="font-size: 1.25rem; color: var(--text-muted); cursor: pointer;"></i>
+        </div>
+    </div>
+</header>
+```
+
+</CodeGroup>
+
+## Properties
+
+### title
+
+<ParamField path="title" type="Signal<string>" default="'Odontologia'">
+  A reactive signal containing the current page title derived from route data
+</ParamField>
+
+The `title` property uses Angular's `toSignal()` function to convert the router's event stream into a signal. It:
+
+1. Listens for `NavigationEnd` events
+2. Traverses to the deepest child route
+3. Extracts the `title` from route data
+4. Falls back to "Odontologia" if no title is defined
+
+**Implementation**: `src/app/header/header.ts:18-32`
+
+## Template Structure
+
+The header is divided into two main sections:
+
+### Left Section (header-info)
+
+<ResponseField name="welcome-msg" type="span">
+  Displays a personalized greeting: "¡Hola, Dr. Admin! 👋"
+</ResponseField>
+
+<ResponseField name="section-title" type="h1">
+  Shows the dynamic page title using signal interpolation: `{{ title() }}`
+</ResponseField>
+
+### Right Section (header-actions)
+
+<ResponseField name="search-bar" type="div">
+  Search input with icon for searching patients and appointments (non-functional in current implementation)
+</ResponseField>
+
+<ResponseField name="user-snippet" type="div">
+  User avatar displaying initials ("AD") and notification bell icon
+</ResponseField>
+
+## Usage
+
+The HeaderComponent is included in the main app layout:
+
+<CodeGroup>
+
+```typescript app.ts
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { Menu } from './menu/menu';
+import { HeaderComponent } from './header/header';
+
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet, Menu, HeaderComponent],
+  templateUrl: './app.html',
+  styleUrl: './app.css'
+})
+export class App {
+  // App logic
+}
+```
+
+```html app.html
+<div class="app-container">
+  <app-menu></app-menu>
+  <div class="main-content">
+    <app-header></app-header>
+    <router-outlet></router-outlet>
+  </div>
+</div>
+```
+
+</CodeGroup>
+
+## Setting Route Titles
+
+To set the page title for a route, add a `title` property to the route data:
+
+<CodeGroup>
+
+```typescript app.routes.ts
+import { Routes } from '@angular/router';
+import { Patient } from './patient/patient';
+import { Appointment } from './appointment/appointment';
+
+export const routes: Routes = [
+  {
+    path: 'patient',
+    component: Patient,
+    data: { title: 'Pacientes' }
+  },
+  {
+    path: 'citas',
+    component: Appointment,
+    data: { title: 'Citas' }
+  }
+];
+```
+
+</CodeGroup>
+
+## Styling
+
+The header uses scoped CSS with the following structure:
+
+<Tabs>
+  <Tab title="Layout">
+    - **header-container**: Flexbox container with space-between alignment
+    - **header-info**: Left section with vertical layout
+    - **header-actions**: Right section with horizontal layout
+  </Tab>
+  <Tab title="Typography">
+    - **welcome-msg**: Smaller, muted text for greeting
+    - **section-title**: Large, bold heading for page title
+  </Tab>
+  <Tab title="Interactive">
+    - **search-bar**: Input with icon and border styling
+    - **user-avatar**: Circular avatar with background color
+    - **notification bell**: Icon button with hover effects
+  </Tab>
+</Tabs>
+
+## Dependency Injection Pattern
+
+The component uses Angular's modern `inject()` function instead of constructor injection:
+
+```typescript
+private readonly router = inject(Router);
+private readonly activatedRoute = inject(ActivatedRoute);
+```
+
+This approach is more concise and works seamlessly with standalone components.
+
+## RxJS Integration
+
+The component demonstrates reactive programming with RxJS operators:
+
+<Steps>
+  <Step title="Filter events">
+    Only process `NavigationEnd` events using the `filter` operator
+  </Step>
+  <Step title="Navigate route tree">
+    Find the deepest child route using `map` transformations
+  </Step>
+  <Step title="Extract data">
+    Use `mergeMap` to access route data observables
+  </Step>
+  <Step title="Convert to signal">
+    Transform the observable stream into a signal with `toSignal`
+  </Step>
+</Steps>
+
+## Customization
+
+### Change Welcome Message
+
+Edit the welcome message in `header.html:3`:
+
+```html
+<span class="welcome-msg">¡Hola, {{ userName }}! 👋</span>
+```
+
+### Add User Avatar Logic
+
+Replace static initials with dynamic user data:
+
+```typescript
+export class HeaderComponent {
+  private readonly userService = inject(UserService);
+  protected readonly userInitials = computed(() => {
+    const user = this.userService.currentUser();
+    return user ? user.initials : 'AD';
+  });
+}
+```
+
+### Implement Search Functionality
+
+Add search logic to the component:
+
+```typescript
+protected searchQuery = signal('');
+
+protected onSearch(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  this.searchQuery.set(input.value);
+  // Implement search logic
+}
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Menu" icon="bars" href="/components/menu">
+    Sidebar navigation component
+  </Card>
+  <Card title="Architecture" icon="home" href="/concepts/architecture">
+    Main application structure
+  </Card>
+</CardGroup>

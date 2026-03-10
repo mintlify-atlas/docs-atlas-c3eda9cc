@@ -1,0 +1,196 @@
+---
+title: 'PatientData'
+description: 'Complete patient information including personal data, medical history, and related appointments and treatments'
+---
+
+## Interface Definition
+
+The `PatientData` interface represents a comprehensive patient record in the system.
+
+```typescript
+export interface PatientData {
+  id: number;
+  nombre: string;
+  edad: number;
+  phone: string;
+  email: string;
+  address: string;
+  medication_allergies: string;
+  billing_data: string;
+  health_status: string;
+  family_history: string;
+  ultimaVisita: string;
+  proximaCita: string;
+  estado: string;
+  citas: Cita[];
+  tratamientos: Tratamiento[];
+}
+```
+
+## Properties
+
+<ResponseField name="id" type="number" required>
+  Unique identifier for the patient
+</ResponseField>
+
+<ResponseField name="nombre" type="string" required>
+  Patient's full name
+</ResponseField>
+
+<ResponseField name="edad" type="number" required>
+  Patient's age in years
+</ResponseField>
+
+<ResponseField name="phone" type="string" required>
+  Contact phone number
+</ResponseField>
+
+<ResponseField name="email" type="string" required>
+  Patient's email address
+</ResponseField>
+
+<ResponseField name="address" type="string" required>
+  Patient's physical address
+</ResponseField>
+
+<ResponseField name="medication_allergies" type="string" required>
+  Known medication allergies or "Ninguna" if none
+</ResponseField>
+
+<ResponseField name="billing_data" type="string" required>
+  Insurance or billing information
+</ResponseField>
+
+<ResponseField name="health_status" type="string" required>
+  Current dental health status and notes
+</ResponseField>
+
+<ResponseField name="family_history" type="string" required>
+  Relevant family medical history
+</ResponseField>
+
+<ResponseField name="ultimaVisita" type="string" required>
+  Date of last visit in format DD/MM/YYYY
+</ResponseField>
+
+<ResponseField name="proximaCita" type="string" required>
+  Date of next scheduled appointment in format DD/MM/YYYY
+</ResponseField>
+
+<ResponseField name="estado" type="string" required>
+  Patient status: "activo", "pendiente", or "urgente"
+</ResponseField>
+
+<ResponseField name="citas" type="Cita[]" required>
+  Array of scheduled appointments for this patient. See [Cita interface](#cita-interface) below.
+</ResponseField>
+
+<ResponseField name="tratamientos" type="Tratamiento[]" required>
+  Array of treatments received by this patient. See [Tratamiento interface](#tratamiento-interface) below.
+</ResponseField>
+
+## Cita Interface
+
+Represents an appointment within a patient's record.
+
+```typescript
+export interface Cita {
+  titulo: string;
+  fecha: string;
+  hora: string;
+  doctor: string;
+  estado: string;
+}
+```
+
+<ResponseField name="titulo" type="string" required>
+  Appointment title or description
+</ResponseField>
+
+<ResponseField name="fecha" type="string" required>
+  Appointment date in format DD/MM/YYYY
+</ResponseField>
+
+<ResponseField name="hora" type="string" required>
+  Appointment time in format HH:MM
+</ResponseField>
+
+<ResponseField name="doctor" type="string" required>
+  Name of the doctor for this appointment
+</ResponseField>
+
+<ResponseField name="estado" type="string" required>
+  Appointment status: "confirmada", "pendiente", etc.
+</ResponseField>
+
+## Tratamiento Interface
+
+Represents a treatment within a patient's record.
+
+```typescript
+export interface Tratamiento {
+  titulo: string;
+  precio: number;
+  fecha: string;
+  doctor: string;
+  descripcion: string;
+}
+```
+
+<ResponseField name="titulo" type="string" required>
+  Treatment title or name
+</ResponseField>
+
+<ResponseField name="precio" type="number" required>
+  Treatment cost in euros
+</ResponseField>
+
+<ResponseField name="fecha" type="string" required>
+  Treatment date in format DD/MM/YYYY
+</ResponseField>
+
+<ResponseField name="doctor" type="string" required>
+  Name of the doctor who performed the treatment
+</ResponseField>
+
+<ResponseField name="descripcion" type="string" required>
+  Detailed description of the treatment
+</ResponseField>
+
+## Example
+
+```json
+{
+  "id": 1,
+  "nombre": "Juan Pérez",
+  "edad": 45,
+  "phone": "600 123 456",
+  "email": "juan.perez@email.com",
+  "address": "Calle Mayor 123, Madrid",
+  "medication_allergies": "Penicilina",
+  "billing_data": "Sanitas - 123456789",
+  "health_status": "Estable. Requiere limpieza profunda.",
+  "family_history": "Diabetes tipo 2 (Padre)",
+  "ultimaVisita": "15/02/2026",
+  "proximaCita": "22/03/2026",
+  "estado": "activo",
+  "citas": [
+    {
+      "titulo": "Limpieza profunda",
+      "fecha": "22/03/2026",
+      "hora": "10:00",
+      "doctor": "Dr. Rodríguez",
+      "estado": "confirmada"
+    }
+  ],
+  "tratamientos": [
+    {
+      "titulo": "Extracción muela",
+      "precio": 120,
+      "fecha": "15/02/2026",
+      "doctor": "Dr. Rodríguez",
+      "descripcion": "Extracción sin complicaciones."
+    }
+  ]
+}
+```

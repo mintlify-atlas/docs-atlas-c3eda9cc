@@ -1,0 +1,289 @@
+---
+title: Installation
+description: Set up your development environment and install Odontología Frontend
+---
+
+## Prerequisites
+
+Before installing Odontología Frontend, ensure you have the following software installed on your system:
+
+### Required Software
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node">
+    **Version:** 20.x or higher (LTS recommended)
+    
+    Download from [nodejs.org](https://nodejs.org/)
+  </Card>
+  <Card title="npm" icon="box">
+    **Version:** 11.6.1 or higher
+    
+    Comes bundled with Node.js
+  </Card>
+</CardGroup>
+
+<Note>
+  This project uses npm 11.6.1 as specified in the `packageManager` field. While other package managers like yarn or pnpm may work, npm is the officially supported package manager.
+</Note>
+
+### Verify Installation
+
+Check that Node.js and npm are properly installed:
+
+```bash
+node --version
+# Should output: v20.x.x or higher
+
+npm --version
+# Should output: 11.6.1 or higher
+```
+
+### Angular CLI (Optional)
+
+While not strictly required (the project includes Angular CLI as a dev dependency), installing Angular CLI globally can be convenient:
+
+```bash
+npm install -g @angular/cli@21.1.4
+```
+
+Verify the installation:
+
+```bash
+ng version
+```
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the Odontología Frontend repository to your local machine:
+    
+    ```bash
+    git clone <repository-url>
+    cd odontologia-frontend
+    ```
+    
+    Replace `<repository-url>` with the actual repository URL.
+  </Step>
+  
+  <Step title="Install Dependencies">
+    Install all required npm packages:
+    
+    ```bash
+    npm install
+    ```
+    
+    This command will:
+    - Install all production dependencies (Angular, RxJS, Express, Boxicons)
+    - Install all development dependencies (Angular CLI, TypeScript, Vitest)
+    - Set up Angular build tools
+    - Configure the development environment
+    
+    <Note>
+      The installation may take 2-5 minutes depending on your internet connection and system speed.
+    </Note>
+    
+    **Expected Output:**
+    ```bash
+    added 1234 packages, and audited 1235 packages in 2m
+    
+    123 packages are looking for funding
+      run `npm fund` for details
+    
+    found 0 vulnerabilities
+    ```
+  </Step>
+  
+  <Step title="Verify Installation">
+    Verify that all dependencies are correctly installed:
+    
+    ```bash
+    npm list --depth=0
+    ```
+    
+    You should see the main dependencies:
+    ```
+    odontologia-frontend@0.0.0
+    ├── @angular/common@21.1.0
+    ├── @angular/compiler@21.1.0
+    ├── @angular/core@21.1.0
+    ├── @angular/forms@21.1.0
+    ├── @angular/platform-browser@21.1.0
+    ├── @angular/router@21.1.0
+    ├── boxicons@2.1.4
+    ├── express@5.1.0
+    └── rxjs@7.8.0
+    ```
+  </Step>
+</Steps>
+
+## Installed Dependencies
+
+### Production Dependencies
+
+These packages are required to run the application:
+
+| Package | Version | Purpose |
+|---------|---------|----------|
+| `@angular/common` | 21.1.0 | Angular common utilities and directives |
+| `@angular/compiler` | 21.1.0 | Angular template compiler |
+| `@angular/core` | 21.1.0 | Core Angular framework |
+| `@angular/forms` | 21.1.0 | Form handling and validation |
+| `@angular/platform-browser` | 21.1.0 | Browser-specific rendering |
+| `@angular/platform-server` | 21.1.0 | Server-side rendering support |
+| `@angular/router` | 21.1.0 | Client-side routing |
+| `@angular/ssr` | 21.1.4 | Server-side rendering utilities |
+| `boxicons` | 2.1.4 | Icon library |
+| `express` | 5.1.0 | Web server for SSR |
+| `rxjs` | 7.8.0 | Reactive programming library |
+| `tslib` | 2.8.1 | TypeScript runtime library |
+
+### Development Dependencies
+
+These packages are only needed during development:
+
+| Package | Version | Purpose |
+|---------|---------|----------|
+| `@angular/build` | 21.1.4 | Angular build system |
+| `@angular/cli` | 21.1.4 | Angular command-line interface |
+| `@angular/compiler-cli` | 21.1.0 | Angular compiler CLI |
+| `@types/express` | 5.0.1 | TypeScript definitions for Express |
+| `@types/node` | 20.17.19 | TypeScript definitions for Node.js |
+| `jsdom` | 27.1.0 | DOM implementation for testing |
+| `typescript` | 5.9.2 | TypeScript compiler |
+| `vitest` | 4.0.8 | Testing framework |
+
+## Project Structure
+
+After installation, your project structure will look like this:
+
+```
+odontologia-frontend/
+├── node_modules/          # Installed dependencies
+├── public/                # Static assets
+├── src/                   # Source code
+│   ├── app/              # Application components
+│   │   ├── appointment/  # Appointment management
+│   │   ├── calendar/     # Calendar view
+│   │   ├── header/       # Header component
+│   │   ├── home/         # Dashboard
+│   │   ├── login/        # Authentication
+│   │   ├── menu/         # Navigation menu
+│   │   ├── patient/      # Patient list
+│   │   ├── new-patient/  # New patient form
+│   │   ├── paciente-detail/ # Patient details
+│   │   ├── services/     # Angular services
+│   │   ├── tratamientos/ # Treatment management
+│   │   ├── app.ts        # Root component
+│   │   ├── app.config.ts # App configuration
+│   │   └── app.routes.ts # Route definitions
+│   ├── index.html        # HTML entry point
+│   ├── main.ts           # Application bootstrap
+│   ├── main.server.ts    # SSR bootstrap
+│   ├── server.ts         # Express server
+│   └── styles.css        # Global styles
+├── angular.json          # Angular configuration
+├── package.json          # Dependencies and scripts
+├── tsconfig.json         # TypeScript configuration
+└── README.md             # Project documentation
+```
+
+## Configuration Files
+
+### TypeScript Configuration
+
+The project uses strict TypeScript settings for maximum type safety:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "target": "ES2022",
+    "module": "preserve"
+  }
+}
+```
+
+### Angular Configuration
+
+The `angular.json` file defines:
+- Build configuration for development and production
+- Asset management (Boxicons CSS)
+- Server-side rendering setup
+- Bundle size budgets (500kB warning, 1MB error)
+
+<Warning>
+  The project enforces strict bundle size limits. The initial bundle should not exceed 1MB to ensure fast load times.
+</Warning>
+
+## Troubleshooting
+
+### Common Installation Issues
+
+<AccordionGroup>
+  <Accordion title="npm install fails with EACCES error">
+    This typically indicates permission issues. Try:
+    
+    ```bash
+    # On macOS/Linux
+    sudo chown -R $USER /usr/local/lib/node_modules
+    
+    # Or install without sudo by configuring npm
+    npm config set prefix ~/.npm-global
+    export PATH=~/.npm-global/bin:$PATH
+    ```
+  </Accordion>
+  
+  <Accordion title="Node version incompatibility">
+    Ensure you're using Node.js 20.x or higher:
+    
+    ```bash
+    node --version
+    ```
+    
+    If using nvm (Node Version Manager):
+    ```bash
+    nvm install 20
+    nvm use 20
+    ```
+  </Accordion>
+  
+  <Accordion title="Slow installation / timeout errors">
+    Try clearing the npm cache:
+    
+    ```bash
+    npm cache clean --force
+    npm install
+    ```
+    
+    Or increase the timeout:
+    ```bash
+    npm install --fetch-timeout=60000
+    ```
+  </Accordion>
+  
+  <Accordion title="Peer dependency warnings">
+    Peer dependency warnings are usually informational and won't prevent the app from running. However, if you encounter issues:
+    
+    ```bash
+    npm install --legacy-peer-deps
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<Card title="Quick Start" icon="rocket" href="/quickstart">
+  Now that you have installed all dependencies, learn how to run the application locally and start development.
+</Card>
+
+## Additional Resources
+
+- [Angular Documentation](https://angular.dev)
+- [Angular CLI Reference](https://angular.dev/tools/cli)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
+- [npm Documentation](https://docs.npmjs.com/)

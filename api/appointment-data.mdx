@@ -1,0 +1,116 @@
+---
+title: 'AppointmentData'
+description: 'Appointment scheduling and tracking information'
+---
+
+## Interface Definition
+
+The `AppointmentData` interface represents a scheduled appointment in the clinic system.
+
+```typescript
+export interface AppointmentData {
+  id: number;
+  fecha: string;
+  hora: string;
+  paciente: string;
+  tratamiento: string;
+  doctor: string;
+  duracion: string;
+  estado: 'confirmada' | 'pendiente' | 'completada';
+  asistido: 'sí' | 'no' | 'pendiente';
+}
+```
+
+## Properties
+
+<ResponseField name="id" type="number" required>
+  Unique identifier for the appointment
+</ResponseField>
+
+<ResponseField name="fecha" type="string" required>
+  Appointment date in format D/M/YYYY
+</ResponseField>
+
+<ResponseField name="hora" type="string" required>
+  Appointment time in format HH:MM (24-hour format)
+</ResponseField>
+
+<ResponseField name="paciente" type="string" required>
+  Patient's full name
+</ResponseField>
+
+<ResponseField name="tratamiento" type="string" required>
+  Type of treatment or procedure scheduled
+</ResponseField>
+
+<ResponseField name="doctor" type="string" required>
+  Name of the assigned doctor (e.g., "Dr. Rodríguez", "Dra. Martínez")
+</ResponseField>
+
+<ResponseField name="duracion" type="string" required>
+  Expected duration of the appointment (e.g., "30 min", "60 min", "90 min")
+</ResponseField>
+
+<ResponseField name="estado" type="'confirmada' | 'pendiente' | 'completada'" required>
+  Current status of the appointment:
+  - `confirmada`: Appointment is confirmed
+  - `pendiente`: Appointment is pending confirmation
+  - `completada`: Appointment has been completed
+</ResponseField>
+
+<ResponseField name="asistido" type="'sí' | 'no' | 'pendiente'" required>
+  Patient attendance status:
+  - `sí`: Patient attended
+  - `no`: Patient did not attend (no-show)
+  - `pendiente`: Appointment has not occurred yet
+</ResponseField>
+
+## Example
+
+```json
+{
+  "id": 1,
+  "fecha": "4/2/2026",
+  "hora": "09:00",
+  "paciente": "María García",
+  "tratamiento": "Limpieza dental",
+  "doctor": "Dr. Rodríguez",
+  "duracion": "30 min",
+  "estado": "confirmada",
+  "asistido": "pendiente"
+}
+```
+
+## Usage Examples
+
+### Confirmed Appointment
+
+```json
+{
+  "id": 4,
+  "fecha": "5/2/2026",
+  "hora": "14:00",
+  "paciente": "Juan Pérez",
+  "tratamiento": "Implante dental",
+  "doctor": "Dr. Sánchez",
+  "duracion": "90 min",
+  "estado": "confirmada",
+  "asistido": "pendiente"
+}
+```
+
+### Long Procedure
+
+```json
+{
+  "id": 7,
+  "fecha": "6/2/2026",
+  "hora": "11:00",
+  "paciente": "Isabel Torres",
+  "tratamiento": "Endodoncia",
+  "doctor": "Dr. Sánchez",
+  "duracion": "120 min",
+  "estado": "confirmada",
+  "asistido": "pendiente"
+}
+```

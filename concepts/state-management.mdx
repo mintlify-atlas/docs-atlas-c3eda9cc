@@ -1,0 +1,603 @@
+---
+title: 'State Management'
+description: 'Understanding state management patterns using services, signals, and RxJS'
+icon: 'database'
+---
+
+## Overview
+
+The Odontología Frontend uses a service-based state management approach, combining Angular's traditional service singleton pattern with modern reactive primitives like **Signals** and **RxJS Observables**.
+
+<Note>
+  This application uses a pragmatic approach: services act as state containers, while signals and observables handle reactivity.
+</Note>
+
+## State Management Architecture
+
+### Three-Layer Approach
+
+<CardGroup cols={3}>
+  <Card title="Services" icon="gear">
+    Singleton services store application state
+  </Card>
+  <Card title="Signals" icon="signal">
+    Reactive state within components
+  </Card>
+  <Card title="RxJS" icon="arrows-spin">
+    Asynchronous operations and event streams
+  </Card>
+</CardGroup>
+
+## Service-Based State
+
+### Injectable Services
+
+All state management services use `providedIn: 'root'` for singleton behavior:
+
+```typescript
+@Injectable({
+  providedIn: 'root'
+})
+export class PatientService {
+  // State is stored directly in the service
+  private patients: PatientData[] = [...];
+}
+```
+
+This pattern ensures:
+- Single source of truth
+- State persists across navigation
+- Shared state between components
+- No need for external state management libraries
+
+## Patient Service
+
+The `PatientService` manages all patient-related state:
+
+```typescript src/app/services/patient.service.ts
+import { Injectable } from '@angular/core';
+
+export interface PatientData {
+  id: number;
+  nombre: string;
+  edad: number;
+  phone: string;
+  email: string;
+  address: string;
+  medication_allergies: string;
+  billing_data: string;
+  health_status: string;
+  family_history: string;
+  ultimaVisita: string;
+  proximaCita: string;
+  estado: string;
+  citas: Cita[];
+  tratamientos: Tratamiento[];
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class PatientService {
+  private patients: PatientData[] = [...];
+
+  getPatients(): PatientData[] {
+    return this.patients;
+  }
+
+  getPatientById(id: number): PatientData | undefined {
+    return this.patients.find(p => p.id === id);
+  }
+
+  addPatient(patient: any): void {
+    const newPatient: PatientData = {
+      ...patient,
+      id: this.patients.length + 1,
+      nombre: `${patient.first_name} ${patient.last_name}`,
+      ultimaVisita: '-',
+      proximaCita: '-',
+      estado: 'activo',
+      citas: [],
+      tratamientos: []
+    };
+    this.patients.push(newPatient);
+  }
+}
+```
+
+### Key Patterns
+
+<AccordionGroup>
+  <Accordion title="Immutable State Updates">
+    While the service stores mutable state internally, components receive copies:
+    
+    ```typescript
+    getPatients(): PatientData[] {
+      return this.patients; // Returns reference
+    }
+    
+    // Better: Return a copy
+    getPatients(): PatientData[] {
+      return [...this.patients];
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Encapsulated State">
+    The `private patients` array is not directly accessible, only through methods:
+    
+    ```typescript
+    private patients: PatientData[] = [];
+    
+    // Controlled access
+    getPatients(): PatientData[] { /* ... */ }
+    addPatient(patient: any): void { /* ... */ }
+    ```
+  </Accordion>
+
+  <Accordion title="Type Safety">
+    Strong TypeScript interfaces define state shape:
+    
+    ```typescript
+    export interface PatientData {
+      id: number;
+      nombre: string;
+      // ... all required fields
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Treatment Service
+
+Manages dental treatment definitions and operations:
+
+```typescript src/app/services/treatment.service.ts
+export interface Tratamiento {
+  id: number;
+  nombre: string;
+  categoria: string;
+  descripcion: string;
+  duracion: number;
+  precio: number;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class TreatmentService {
+  private tratamientos: Tratamiento[] = [
+    { id: 1, nombre: 'Limpieza dental', categoria: 'Preventiva', 
+      descripcion: 'Limpieza profesional y eliminación de sarro.', 
+      duracion: 45, precio: 80 },
+    // ... more treatments
+  ];
+
+  getTratamientos(): Tratamiento[] {
+    return this.tratamientos;
+  }
+
+  addTratamiento(tratamiento: Omit<Tratamiento, 'id'>) {
+    const id = this.tratamientos.length > 0 
+      ? Math.max(...this.tratamientos.map(t => t.id)) + 1 
+      : 1;
+    const newTratamiento = { ...tratamiento, id };
+    this.tratamientos.push(newTratamiento);
+    return newTratamiento;
+  }
+
+  updateTratamiento(tratamiento: Tratamiento) {
+    const index = this.tratamientos.findIndex(t => t.id === tratamiento.id);
+    if (index !== -1) {
+      this.tratamientos[index] = tratamiento;
+    }
+  }
+
+  deleteTratamiento(id: number) {
+    this.tratamientos = this.tratamientos.filter(t => t.id !== id);
+  }
+}
+```
+
+### CRUD Operations Pattern
+
+The service provides complete CRUD operations:
+
+<Tabs>
+  <Tab title="Create">
+    ```typescript
+    addTratamiento(tratamiento: Omit<Tratamiento, 'id'>) {
+      const id = this.tratamientos.length > 0 
+        ? Math.max(...this.tratamientos.map(t => t.id)) + 1 
+        : 1;
+      const newTratamiento = { ...tratamiento, id };
+      this.tratamientos.push(newTratamiento);
+      return newTratamiento;
+    }
+    ```
+  </Tab>
+  <Tab title="Read">
+    ```typescript
+    getTratamientos(): Tratamiento[] {
+      return this.tratamientos;
+    }
+    ```
+  </Tab>
+  <Tab title="Update">
+    ```typescript
+    updateTratamiento(tratamiento: Tratamiento) {
+      const index = this.tratamientos.findIndex(t => t.id === tratamiento.id);
+      if (index !== -1) {
+        this.tratamientos[index] = tratamiento;
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Delete">
+    ```typescript
+    deleteTratamiento(id: number) {
+      this.tratamientos = this.tratamientos.filter(t => t.id !== id);
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Appointment Service
+
+Handles appointment scheduling and management:
+
+```typescript src/app/services/appointment.service.ts
+export interface AppointmentData {
+  id: number;
+  fecha: string;
+  hora: string;
+  paciente: string;
+  tratamiento: string;
+  doctor: string;
+  duracion: string;
+  estado: 'confirmada' | 'pendiente' | 'completada';
+  asistido: 'sí' | 'no' | 'pendiente';
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AppointmentService {
+  private appointments: AppointmentData[] = [...];
+
+  getAppointments(): AppointmentData[] {
+    return this.appointments;
+  }
+
+  updateAppointmentStatus(id: number, status: 'confirmada' | 'pendiente' | 'completada'): void {
+    const appointment = this.appointments.find(a => a.id === id);
+    if (appointment) {
+      appointment.estado = status;
+    }
+  }
+
+  updateAppointmentTime(id: number, time: string): void {
+    const appointment = this.appointments.find(a => a.id === id);
+    if (appointment) {
+      appointment.hora = time;
+    }
+  }
+
+  addAppointment(data: Omit<AppointmentData, 'id' | 'estado' | 'asistido' | 'duracion'>): void {
+    const newId = this.appointments.length > 0 
+      ? Math.max(...this.appointments.map(a => a.id)) + 1 
+      : 1;
+    const newAppointment: AppointmentData = {
+      ...data,
+      id: newId,
+      estado: 'pendiente',
+      asistido: 'pendiente',
+      duracion: '30 min'
+    };
+    this.appointments.push(newAppointment);
+  }
+}
+```
+
+### Specialized Update Methods
+
+The appointment service provides granular update methods:
+
+```typescript
+updateAppointmentStatus(id: number, status: 'confirmada' | 'pendiente' | 'completada'): void
+updateAppointmentTime(id: number, time: string): void
+updateAppointmentAttendance(id: number, asistido: 'sí' | 'no' | 'pendiente'): void
+```
+
+This pattern:
+- Provides clear, focused APIs
+- Ensures type safety with union types
+- Makes state changes explicit and trackable
+
+## Component State with Signals
+
+Components use Angular Signals for local, reactive state:
+
+```typescript src/app/app.ts
+export class App {
+  private readonly router = inject(Router);
+  
+  // Signal for component state
+  protected readonly title = signal('odontologia-frontend');
+
+  // Signal derived from Observable
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map(event => (event as NavigationEnd).urlAfterRedirects)
+    ),
+    { initialValue: this.router.url }
+  );
+
+  // Computed signal
+  protected showMenu = computed(() => {
+    const url = this.currentUrl();
+    return url ? !url.includes('/login') : true;
+  });
+}
+```
+
+### Signal Patterns
+
+<AccordionGroup>
+  <Accordion title="Basic Signals">
+    Simple reactive state:
+    
+    ```typescript
+    protected readonly title = signal('odontologia-frontend');
+    
+    // Update the signal
+    this.title.set('New Title');
+    
+    // Read the signal value
+    const currentTitle = this.title();
+    ```
+  </Accordion>
+
+  <Accordion title="Computed Signals">
+    Derived state that automatically updates:
+    
+    ```typescript
+    protected showMenu = computed(() => {
+      const url = this.currentUrl();
+      return url ? !url.includes('/login') : true;
+    });
+    
+    // In template
+    @if (showMenu()) {
+      <app-menu></app-menu>
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Observable to Signal">
+    Convert RxJS observables to signals:
+    
+    ```typescript
+    private readonly currentUrl = toSignal(
+      this.router.events.pipe(
+        filter(event => event instanceof NavigationEnd),
+        map(event => (event as NavigationEnd).urlAfterRedirects)
+      ),
+      { initialValue: this.router.url }
+    );
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## RxJS for Asynchronous State
+
+While not extensively used in the current codebase, RxJS is leveraged for event streams:
+
+```typescript
+private readonly currentUrl = toSignal(
+  this.router.events.pipe(
+    filter(event => event instanceof NavigationEnd),
+    map(event => (event as NavigationEnd).urlAfterRedirects)
+  ),
+  { initialValue: this.router.url }
+);
+```
+
+### When to Use RxJS
+
+<CardGroup cols={2}>
+  <Card title="HTTP Requests" icon="globe">
+    Use observables for API calls and data fetching
+  </Card>
+  <Card title="Event Streams" icon="water">
+    Handle complex event sequences and transformations
+  </Card>
+  <Card title="Async Operations" icon="clock">
+    Manage timers, intervals, and delayed actions
+  </Card>
+  <Card title="Multi-source Data" icon="code-merge">
+    Combine multiple data sources with operators
+  </Card>
+</CardGroup>
+
+## State Flow Patterns
+
+### Component → Service → Component
+
+Typical data flow:
+
+```typescript
+// Component retrieves state
+export class Patient implements OnInit {
+  patients: PatientData[] = [];
+
+  constructor(private patientService: PatientService) { }
+
+  ngOnInit(): void {
+    // Fetch state from service
+    this.patients = this.patientService.getPatients();
+  }
+}
+
+// Component modifies state
+export class NewPatient {
+  constructor(
+    private patientService: PatientService,
+    private router: Router
+  ) {}
+
+  onSubmit(formData: any) {
+    // Update state through service
+    this.patientService.addPatient(formData);
+    
+    // Navigate to updated view
+    this.router.navigate(['/patient']);
+  }
+}
+```
+
+### Component-Local Computed State
+
+Components can derive local state from service data:
+
+```typescript src/app/patient/patient.ts
+export class Patient implements OnInit {
+  searchText: string = '';
+  patients: PatientData[] = [];
+
+  get filteredPatients() {
+    if (!this.searchText) {
+      return this.patients;
+    }
+    const search = this.searchText.toLowerCase();
+    return this.patients.filter(p =>
+      (p.nombre?.toLowerCase().includes(search) || false) ||
+      (p.email?.toLowerCase().includes(search) || false) ||
+      (p.phone?.includes(search) || false)
+    );
+  }
+}
+```
+
+## State Persistence
+
+Currently, state is stored in-memory and resets on page refresh. For persistence, consider:
+
+### LocalStorage Pattern
+
+```typescript
+@Injectable({
+  providedIn: 'root'
+})
+export class PatientService {
+  private readonly STORAGE_KEY = 'patients';
+  private patients: PatientData[] = [];
+
+  constructor() {
+    this.loadFromStorage();
+  }
+
+  private loadFromStorage(): void {
+    const stored = localStorage.getItem(this.STORAGE_KEY);
+    if (stored) {
+      this.patients = JSON.parse(stored);
+    }
+  }
+
+  private saveToStorage(): void {
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.patients));
+  }
+
+  addPatient(patient: any): void {
+    // ... add logic
+    this.saveToStorage();
+  }
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Services for Shared State" icon="share-nodes">
+    Use services for state shared across multiple components
+  </Card>
+  <Card title="Signals for Component State" icon="signal">
+    Use signals for local, reactive component state
+  </Card>
+  <Card title="Immutable Updates" icon="lock">
+    Avoid direct mutation, create new objects/arrays
+  </Card>
+  <Card title="Strong Types" icon="shield">
+    Define interfaces for all state shapes
+  </Card>
+  <Card title="Single Responsibility" icon="bullseye">
+    Each service manages one domain of state
+  </Card>
+  <Card title="Encapsulation" icon="box">
+    Keep state private, expose through methods
+  </Card>
+</CardGroup>
+
+## State Management Comparison
+
+| Pattern | Use Case | Example |
+|---------|----------|----------|
+| **Service State** | Shared application state | Patient list, treatments |
+| **Signals** | Component-local reactive state | UI toggles, derived values |
+| **RxJS Observables** | Asynchronous operations | HTTP requests, router events |
+| **Component Properties** | Simple, non-reactive state | Form values, temporary flags |
+| **Getters** | Computed from component state | Filtered lists, formatted data |
+
+## Extending State Management
+
+For more complex applications, consider:
+
+### Observable Services
+
+```typescript
+@Injectable({
+  providedIn: 'root'
+})
+export class PatientService {
+  private patientsSubject = new BehaviorSubject<PatientData[]>([]);
+  public patients$ = this.patientsSubject.asObservable();
+
+  addPatient(patient: any): void {
+    const current = this.patientsSubject.value;
+    this.patientsSubject.next([...current, patient]);
+  }
+}
+
+// Component usage
+export class Patient {
+  patients$ = this.patientService.patients$;
+}
+```
+
+### Signal-Based Services
+
+```typescript
+@Injectable({
+  providedIn: 'root'
+})
+export class PatientService {
+  private patientsSignal = signal<PatientData[]>([]);
+  public patients = this.patientsSignal.asReadonly();
+
+  addPatient(patient: any): void {
+    this.patientsSignal.update(patients => [...patients, patient]);
+  }
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Architecture" href="/concepts/architecture" icon="building">
+    Learn about the application's overall architecture
+  </Card>
+  <Card title="Routing" href="/concepts/routing" icon="route">
+    Explore routing and navigation patterns
+  </Card>
+</CardGroup>

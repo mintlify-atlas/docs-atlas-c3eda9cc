@@ -1,0 +1,496 @@
+---
+title: 'Appointment Scheduling'
+description: 'Advanced appointment management system with status tracking and real-time updates'
+icon: 'calendar-check'
+---
+
+## Overview
+
+The Appointment Scheduling system provides comprehensive tools for managing dental appointments, including creation, modification, status updates, and attendance tracking. The system integrates with patient and treatment management for seamless workflow.
+
+## Appointment Data Model
+
+Appointments are defined by the `AppointmentData` interface in `src/app/services/appointment.service.ts`:
+
+```typescript
+export interface AppointmentData {
+  id: number;
+  fecha: string;           // Date in D/M/YYYY format
+  hora: string;            // Time in HH:MM format
+  paciente: string;        // Patient name
+  tratamiento: string;     // Treatment name
+  doctor: string;          // Doctor name
+  duracion: string;        // Duration (e.g., "30 min")
+  estado: 'confirmada' | 'pendiente' | 'completada';
+  asistido: 'sí' | 'no' | 'pendiente';
+}
+```
+
+## Appointment Service
+
+The `AppointmentService` provides all appointment-related operations:
+
+### Location
+`src/app/services/appointment.service.ts`
+
+### Available Methods
+
+<CardGroup cols={2}>
+  <Card title="getAppointments()" icon="list">
+    Returns all appointments
+  </Card>
+  <Card title="addAppointment(data)" icon="plus">
+    Creates a new appointment
+  </Card>
+  <Card title="updateAppointmentStatus(id, status)" icon="pen">
+    Updates appointment status
+  </Card>
+  <Card title="updateAppointmentTime(id, time)" icon="clock">
+    Reschedules an appointment
+  </Card>
+  <Card title="updateAppointmentAttendance(id, asistido)" icon="check">
+    Marks attendance status
+  </Card>
+  <Card title="deleteAppointment(id)" icon="trash">
+    Removes an appointment
+  </Card>
+</CardGroup>
+
+### Service Implementation
+
+```typescript
+@Injectable({
+  providedIn: 'root'
+})
+export class AppointmentService {
+  private appointments: AppointmentData[] = [...];
+
+  getAppointments(): AppointmentData[] {
+    return this.appointments;
+  }
+
+  updateAppointmentStatus(
+    id: number, 
+    status: 'confirmada' | 'pendiente' | 'completada'
+  ): void {
+    const appointment = this.appointments.find(a => a.id === id);
+    if (appointment) {
+      appointment.estado = status;
+    }
+  }
+
+  addAppointment(
+    data: Omit<AppointmentData, 'id' | 'estado' | 'asistido' | 'duracion'>
+  ): void {
+    const newId = this.appointments.length > 0 
+      ? Math.max(...this.appointments.map(a => a.id)) + 1 
+      : 1;
+    const newAppointment: AppointmentData = {
+      ...data,
+      id: newId,
+      estado: 'pendiente',
+      asistido: 'pendiente',
+      duracion: '30 min'
+    };
+    this.appointments.push(newAppointment);
+  }
+}
+```
+
+## Appointment Component
+
+The main appointment management interface is in `src/app/appointment/appointment.ts`:
+
+### Component Structure
+
+```typescript
+@Component({
+  selector: 'app-appointment',
+  standalone: true,
+  imports: [CommonModule, FormsModule, NewAppointment],
+  templateUrl: './appointment.html',
+  styleUrl: './appointment.css',
+})
+export class Appointment implements OnInit {
+  appointments: AppointmentData[] = [];
+  searchText: string = '';
+  currentFilter: string = 'Todas';
+  selectedAppointment: AppointmentData | null = null;
+  isPopupOpen: boolean = false;
+  isNewAppointmentModalOpen: boolean = false;
+  newTime: string = '';
+  asistencia: 'sí' | 'no' | 'pendiente' = 'pendiente';
+
+  constructor(private appointmentService: AppointmentService) { }
+
+  ngOnInit(): void {
+    this.loadAppointments();
+  }
+}
+```
+
+## Filtering System
+
+The appointment list supports multi-criteria filtering:
+
+### Status Filters
+
+<CardGroup cols={3}>
+  <Card title="Todas" icon="list">
+    Show all appointments
+  </Card>
+  <Card title="Confirmadas" icon="circle-check">
+    Only confirmed appointments
+  </Card>
+  <Card title="Pendientes" icon="clock">
+    Awaiting confirmation
+  </Card>
+  <Card title="Completadas" icon="check">
+    Finished appointments
+  </Card>
+</CardGroup>
+
+### Filter Implementation
+
+```typescript
+setFilter(filter: string): void {
+  this.currentFilter = filter;
+}
+
+get filteredAppointments(): AppointmentData[] {
+  let filtered = this.appointments;
+
+  // Filter by status
+  if (this.currentFilter !== 'Todas') {
+    filtered = filtered.filter(a => 
+      a.estado.toLowerCase() === this.currentFilter.toLowerCase().slice(0, -1) ||
+      (this.currentFilter === 'Confirmadas' && a.estado === 'confirmada') ||
+      (this.currentFilter === 'Pendientes' && a.estado === 'pendiente') ||
+      (this.currentFilter === 'Completadas' && a.estado === 'completada')
+    );
+  }
+
+  // Filter by search text
+  if (this.searchText) {
+    const search = this.searchText.toLowerCase();
+    filtered = filtered.filter(a =>
+      a.paciente.toLowerCase().includes(search) ||
+      a.tratamiento.toLowerCase().includes(search)
+    );
+  }
+
+  return filtered;
+}
+```
+
+### Search Functionality
+
+The search feature allows filtering by:
+- Patient name
+- Treatment type
+
+<Note>
+  The search is case-insensitive and updates in real-time as you type.
+</Note>
+
+## Creating New Appointments
+
+New appointments are created through the `NewAppointment` component:
+
+### Component Location
+`src/app/new-appointment/new-appointment.ts`
+
+### Form Structure
+
+```typescript
+@Component({
+  selector: 'app-new-appointment',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './new-appointment.html',
+  styleUrl: './new-appointment.css',
+})
+export class NewAppointment implements OnInit {
+  @Input() initialDate: string = '';
+  @Output() close = new EventEmitter<void>();
+  @Output() created = new EventEmitter<void>();
+
+  appointmentData = {
+    paciente: '',
+    doctor: '',
+    fecha: '',
+    hora: '',
+    tratamiento: ''
+  };
+
+  doctors = ['Dr. Rodríguez', 'Dra. Martínez', 'Dr. Sánchez'];
+}
+```
+
+### Treatment Autocomplete
+
+The component features intelligent treatment suggestions:
+
+```typescript
+allTreatments: Tratamiento[] = [];
+filteredTreatments: Tratamiento[] = [];
+showSuggestions: boolean = false;
+
+onTreatmentInput(): void {
+  if (this.appointmentData.tratamiento) {
+    const search = this.appointmentData.tratamiento.toLowerCase();
+    this.filteredTreatments = this.allTreatments.filter(t =>
+      t.nombre.toLowerCase().includes(search)
+    );
+    this.showSuggestions = this.filteredTreatments.length > 0;
+  } else {
+    this.filteredTreatments = [];
+    this.showSuggestions = false;
+  }
+}
+
+selectTreatment(treatment: Tratamiento): void {
+  this.appointmentData.tratamiento = treatment.nombre;
+  this.showSuggestions = false;
+}
+```
+
+<Steps>
+  <Step title="User Types Treatment">
+    As the user types, the system searches available treatments
+  </Step>
+  <Step title="Display Suggestions">
+    Matching treatments are displayed in a dropdown
+  </Step>
+  <Step title="Select Treatment">
+    User clicks on a suggestion to auto-fill the field
+  </Step>
+  <Step title="Hide Suggestions">
+    Dropdown closes after selection or when field loses focus
+  </Step>
+</Steps>
+
+### Submitting New Appointment
+
+```typescript
+onSubmit(): void {
+  if (this.appointmentData.paciente && 
+      this.appointmentData.doctor && 
+      this.appointmentData.fecha && 
+      this.appointmentData.hora) {
+    this.appointmentService.addAppointment(this.appointmentData);
+    this.created.emit();
+    this.close.emit();
+  }
+}
+```
+
+## Managing Existing Appointments
+
+### Opening Appointment Details
+
+```typescript
+openPopup(appointment: AppointmentData): void {
+  this.selectedAppointment = { ...appointment };
+  this.newTime = appointment.hora;
+  this.asistencia = appointment.asistido;
+  this.isPopupOpen = true;
+}
+```
+
+### Updating Appointment Status
+
+```typescript
+updateStatus(status: 'confirmada' | 'pendiente' | 'completada'): void {
+  if (this.selectedAppointment) {
+    this.appointmentService.updateAppointmentStatus(
+      this.selectedAppointment.id, 
+      status
+    );
+    this.loadAppointments();
+    this.closePopup();
+  }
+}
+```
+
+### Rescheduling Appointments
+
+```typescript
+updateTime(): void {
+  if (this.selectedAppointment && this.newTime) {
+    this.appointmentService.updateAppointmentTime(
+      this.selectedAppointment.id, 
+      this.newTime
+    );
+    this.loadAppointments();
+    this.closePopup();
+  }
+}
+```
+
+### Saving Multiple Changes
+
+```typescript
+saveChanges(): void {
+  if (this.selectedAppointment) {
+    this.appointmentService.updateAppointmentTime(
+      this.selectedAppointment.id, 
+      this.newTime
+    );
+    this.appointmentService.updateAppointmentAttendance(
+      this.selectedAppointment.id, 
+      this.asistencia
+    );
+    this.loadAppointments();
+    this.closePopup();
+  }
+}
+```
+
+## Attendance Tracking
+
+Appointments track patient attendance with three states:
+
+| Estado | Description | When to Use |
+|--------|-------------|-------------|
+| pendiente | Default state | Before appointment time |
+| sí | Patient attended | After successful appointment |
+| no | Patient did not show | After missed appointment |
+
+### Marking as Absent
+
+```typescript
+markAsAbsent(): void {
+  if (this.selectedAppointment) {
+    this.appointmentService.deleteAppointment(
+      this.selectedAppointment.id
+    );
+    this.loadAppointments();
+    this.closePopup();
+  }
+}
+```
+
+<Warning>
+  Marking as absent will delete the appointment record. Consider implementing a soft delete or archive system for historical tracking.
+</Warning>
+
+## Sample Appointment Data
+
+```typescript
+{
+  id: 1,
+  fecha: '4/2/2026',
+  hora: '09:00',
+  paciente: 'María García',
+  tratamiento: 'Limpieza dental',
+  doctor: 'Dr. Rodríguez',
+  duracion: '30 min',
+  estado: 'confirmada',
+  asistido: 'pendiente'
+}
+```
+
+## Routing Configuration
+
+Appointment routes in `src/app/app.routes.ts`:
+
+```typescript
+{ 
+  path: 'citas', 
+  component: Appointment, 
+  data: { title: 'Citas Médicas' } 
+}
+```
+
+## Usage Examples
+
+### Get All Appointments
+
+```typescript
+const appointments = this.appointmentService.getAppointments();
+console.log(`Total appointments: ${appointments.length}`);
+```
+
+### Create New Appointment
+
+```typescript
+const newAppointment = {
+  paciente: 'Juan Pérez',
+  doctor: 'Dr. Rodríguez',
+  fecha: '10/03/2026',
+  hora: '14:30',
+  tratamiento: 'Limpieza dental'
+};
+
+this.appointmentService.addAppointment(newAppointment);
+```
+
+### Confirm Appointment
+
+```typescript
+this.appointmentService.updateAppointmentStatus(1, 'confirmada');
+```
+
+### Reschedule Appointment
+
+```typescript
+this.appointmentService.updateAppointmentTime(1, '16:00');
+```
+
+### Mark Attendance
+
+```typescript
+this.appointmentService.updateAppointmentAttendance(1, 'sí');
+```
+
+## Integration Points
+
+### With Patient Management
+- Appointments are linked to patient names
+- Patient details can be accessed from appointment records
+- Patient appointment history is tracked
+
+### With Treatment Tracking
+- Treatment autocomplete pulls from treatment catalog
+- Treatment duration can inform appointment duration
+- Treatment history links to appointments
+
+### With Calendar
+- Appointments are displayed on calendar view
+- Calendar allows quick appointment creation with date pre-filled
+- Visual representation of appointment schedule
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Confirmation" icon="bell">
+    Always confirm appointments before the scheduled time
+  </Card>
+  <Card title="Buffer Time" icon="clock">
+    Consider buffer time between appointments for preparation
+  </Card>
+  <Card title="Reminders" icon="envelope">
+    Implement appointment reminders to reduce no-shows
+  </Card>
+  <Card title="Status Updates" icon="rotate">
+    Keep appointment status current for accurate scheduling
+  </Card>
+</CardGroup>
+
+## Future Enhancements
+
+- Email/SMS appointment reminders
+- Recurring appointment support
+- Doctor availability checking
+- Conflict detection for double-booking
+- Wait list management
+- Online appointment booking
+- Integration with calendar applications
+- Automated status updates
+
+## Related Features
+
+- [Patient Management](/features/patient-management) - Patient records and history
+- [Treatment Tracking](/features/treatment-tracking) - Available treatments
+- [Calendar](/features/calendar) - Visual appointment scheduling

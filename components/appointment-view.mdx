@@ -1,0 +1,697 @@
+---
+title: 'Appointment View Component'
+description: 'Manage and edit appointments with status updates'
+---
+
+## Overview
+
+The `Appointment` component provides a comprehensive appointment management interface with filtering, search functionality, and inline editing capabilities. Users can view, filter, edit appointment details, and update appointment status.
+
+## Component Definition
+
+<ParamField path="selector" type="string" default="app-appointment">
+  The CSS selector used to include this component in templates
+</ParamField>
+
+<ParamField path="standalone" type="boolean" default={true}>
+  Standalone component with explicit imports
+</ParamField>
+
+<ParamField path="imports" type="array">
+  Dependencies: `CommonModule`, `FormsModule`, `NewAppointment`
+</ParamField>
+
+## Source Code Location
+
+**File**: `src/app/appointment/appointment.ts:7`
+
+<CodeGroup>
+
+```typescript appointment.ts
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { AppointmentService, AppointmentData } from '../services/appointment.service';
+import { NewAppointment } from '../new-appointment/new-appointment';
+
+@Component({
+  selector: 'app-appointment',
+  standalone: true,
+  imports: [CommonModule, FormsModule, NewAppointment],
+  templateUrl: './appointment.html',
+  styleUrl: './appointment.css',
+})
+export class Appointment implements OnInit {
+  appointments: AppointmentData[] = [];
+  searchText: string = '';
+  currentFilter: string = 'Todas';
+  selectedAppointment: AppointmentData | null = null;
+  isPopupOpen: boolean = false;
+  isNewAppointmentModalOpen: boolean = false;
+  newTime: string = '';
+  asistencia: 'sí' | 'no' | 'pendiente' = 'pendiente';
+
+  constructor(private appointmentService: AppointmentService) { }
+
+  ngOnInit(): void {
+    this.loadAppointments();
+  }
+
+  loadAppointments(): void {
+    this.appointments = this.appointmentService.getAppointments();
+  }
+
+  setFilter(filter: string): void {
+    this.currentFilter = filter;
+  }
+
+  get filteredAppointments(): AppointmentData[] {
+    let filtered = this.appointments;
+
+    // Filter by status
+    if (this.currentFilter !== 'Todas') {
+      filtered = filtered.filter(a => 
+        a.estado.toLowerCase() === this.currentFilter.toLowerCase().slice(0, -1) ||
+        (this.currentFilter === 'Confirmadas' && a.estado === 'confirmada') ||
+        (this.currentFilter === 'Pendientes' && a.estado === 'pendiente') ||
+        (this.currentFilter === 'Completadas' && a.estado === 'completada')
+      );
+    }
+
+    // Filter by search text
+    if (this.searchText) {
+      const search = this.searchText.toLowerCase();
+      filtered = filtered.filter(a =>
+        a.paciente.toLowerCase().includes(search) ||
+        a.tratamiento.toLowerCase().includes(search)
+      );
+    }
+
+    return filtered;
+  }
+
+  openPopup(appointment: AppointmentData): void {
+    this.selectedAppointment = { ...appointment };
+    this.newTime = appointment.hora;
+    this.asistencia = appointment.asistido;
+    this.isPopupOpen = true;
+  }
+
+  openNewAppointmentModal(): void {
+    this.isNewAppointmentModalOpen = true;
+  }
+
+  closeNewAppointmentModal(): void {
+    this.isNewAppointmentModalOpen = false;
+    this.loadAppointments();
+  }
+
+  closePopup(): void {
+    this.isPopupOpen = false;
+    this.selectedAppointment = null;
+  }
+
+  updateStatus(status: 'confirmada' | 'pendiente' | 'completada'): void {
+    if (this.selectedAppointment) {
+      this.appointmentService.updateAppointmentStatus(
+        this.selectedAppointment.id, 
+        status
+      );
+      this.loadAppointments();
+      this.closePopup();
+    }
+  }
+
+  updateTime(): void {
+    if (this.selectedAppointment && this.newTime) {
+      this.appointmentService.updateAppointmentTime(
+        this.selectedAppointment.id, 
+        this.newTime
+      );
+      this.loadAppointments();
+      this.closePopup();
+    }
+  }
+
+  saveChanges(): void {
+    if (this.selectedAppointment) {
+      this.appointmentService.updateAppointmentTime(
+        this.selectedAppointment.id, 
+        this.newTime
+      );
+      this.appointmentService.updateAppointmentAttendance(
+        this.selectedAppointment.id, 
+        this.asistencia
+      );
+      this.loadAppointments();
+      this.closePopup();
+    }
+  }
+
+  markAsAbsent(): void {
+    if (this.selectedAppointment) {
+      this.appointmentService.deleteAppointment(this.selectedAppointment.id);
+      this.loadAppointments();
+      this.closePopup();
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+## Properties
+
+### appointments
+
+<ParamField path="appointments" type="AppointmentData[]" default="[]">
+  Array of all appointment records loaded from the service
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:15`
+
+### searchText
+
+<ParamField path="searchText" type="string" default="''">
+  The current search query for filtering appointments by patient or treatment
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:16`
+
+### currentFilter
+
+<ParamField path="currentFilter" type="string" default="'Todas'">
+  The current status filter: "Todas", "Confirmadas", "Pendientes", or "Completadas"
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:17`
+
+### selectedAppointment
+
+<ParamField path="selectedAppointment" type="AppointmentData | null" default={null}>
+  The appointment currently being edited in the modal
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:18`
+
+### isPopupOpen
+
+<ParamField path="isPopupOpen" type="boolean" default={false}>
+  Controls the visibility of the edit appointment modal
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:19`
+
+### isNewAppointmentModalOpen
+
+<ParamField path="isNewAppointmentModalOpen" type="boolean" default={false}>
+  Controls the visibility of the new appointment modal
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:20`
+
+### newTime
+
+<ParamField path="newTime" type="string" default="''">
+  The new time value being edited in the appointment modal
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:21`
+
+### asistencia
+
+<ParamField path="asistencia" type="'sí' | 'no' | 'pendiente'" default="'pendiente'">
+  The attendance status for the selected appointment
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:22`
+
+## Computed Properties
+
+### filteredAppointments
+
+<ParamField path="filteredAppointments" type="AppointmentData[]">
+  Getter that returns appointments filtered by status and search text
+</ParamField>
+
+The filtering logic applies two layers of filtering:
+
+1. **Status Filter**: Filters by appointment status (confirmada, pendiente, completada)
+2. **Search Filter**: Filters by patient name or treatment type
+
+**Implementation**: `src/app/appointment/appointment.ts:38-59`
+
+<CodeGroup>
+
+```typescript Filtering Logic
+get filteredAppointments(): AppointmentData[] {
+  let filtered = this.appointments;
+
+  // Filter by status
+  if (this.currentFilter !== 'Todas') {
+    filtered = filtered.filter(a => 
+      a.estado.toLowerCase() === this.currentFilter.toLowerCase().slice(0, -1) ||
+      (this.currentFilter === 'Confirmadas' && a.estado === 'confirmada') ||
+      (this.currentFilter === 'Pendientes' && a.estado === 'pendiente') ||
+      (this.currentFilter === 'Completadas' && a.estado === 'completada')
+    );
+  }
+
+  // Filter by search text
+  if (this.searchText) {
+    const search = this.searchText.toLowerCase();
+    filtered = filtered.filter(a =>
+      a.paciente.toLowerCase().includes(search) ||
+      a.tratamiento.toLowerCase().includes(search)
+    );
+  }
+
+  return filtered;
+}
+```
+
+</CodeGroup>
+
+## Methods
+
+### ngOnInit()
+
+<ParamField path="ngOnInit" type="() => void">
+  Lifecycle hook that loads appointment data on component initialization
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:26-28`
+
+### loadAppointments()
+
+<ParamField path="loadAppointments" type="() => void">
+  Fetches all appointments from the service and updates the local state
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:30-32`
+
+### setFilter()
+
+<ParamField path="setFilter" type="(filter: string) => void">
+  Updates the current status filter
+</ParamField>
+
+```typescript
+setFilter(filter: string): void {
+  this.currentFilter = filter;
+}
+```
+
+**Implementation**: `src/app/appointment/appointment.ts:34-36`
+
+### openPopup()
+
+<ParamField path="openPopup" type="(appointment: AppointmentData) => void">
+  Opens the edit modal with the selected appointment data
+</ParamField>
+
+Creates a shallow copy of the appointment to avoid mutating the original until saved.
+
+**Implementation**: `src/app/appointment/appointment.ts:61-66`
+
+### openNewAppointmentModal()
+
+<ParamField path="openNewAppointmentModal" type="() => void">
+  Opens the new appointment creation modal
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:68-70`
+
+### closeNewAppointmentModal()
+
+<ParamField path="closeNewAppointmentModal" type="() => void">
+  Closes the new appointment modal and reloads the appointments list
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:72-75`
+
+### closePopup()
+
+<ParamField path="closePopup" type="() => void">
+  Closes the edit modal and clears the selected appointment
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:77-80`
+
+### updateStatus()
+
+<ParamField path="updateStatus" type="(status: 'confirmada' | 'pendiente' | 'completada') => void">
+  Updates the status of the selected appointment
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:82-89`
+
+### updateTime()
+
+<ParamField path="updateTime" type="() => void">
+  Updates the appointment time and closes the modal
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:91-98`
+
+### saveChanges()
+
+<ParamField path="saveChanges" type="() => void">
+  Saves all changes (time and attendance) to the selected appointment
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:100-110`
+
+### markAsAbsent()
+
+<ParamField path="markAsAbsent" type="() => void">
+  Deletes the appointment (marks patient as absent)
+</ParamField>
+
+**Implementation**: `src/app/appointment/appointment.ts:112-117`
+
+## Template Structure
+
+The component template has four main sections:
+
+### Header Section
+
+<ResponseField name="title-section" type="div">
+  - **Title**: "Citas"
+  - **Description**: "Gestión de citas y agenda"
+</ResponseField>
+
+<ResponseField name="btn-new" type="button">
+  "Nueva Cita" button that opens the new appointment modal
+</ResponseField>
+
+### Search and Filter Section
+
+<Tabs>
+  <Tab title="Search Bar">
+    ```html
+    <div class="search-bar">
+      <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+      <input type="text" 
+             placeholder="Buscar por paciente o tratamiento..." 
+             [(ngModel)]="searchText">
+    </div>
+    ```
+  </Tab>
+  <Tab title="Filter Buttons">
+    ```html
+    <div class="filter-group">
+      <button *ngFor="let filter of ['Todas', 'Confirmadas', 'Pendientes', 'Completadas']"
+        [class.active]="currentFilter === filter" 
+        (click)="setFilter(filter)">
+        {{ filter }}
+      </button>
+    </div>
+    ```
+  </Tab>
+</Tabs>
+
+### Appointment Table
+
+<ResponseField name="table-container" type="div">
+  Displays appointments in a table with columns:
+  - **Fecha y Hora**: Date and time with icons
+  - **Paciente**: Patient name with user icon
+  - **Tratamiento**: Treatment type
+  - **Doctor**: Assigned doctor
+  - **Duración**: Appointment duration
+  - **Estado**: Status badge with dynamic styling
+</ResponseField>
+
+**Row Click**: Each table row opens the edit modal:
+
+```html
+<tr *ngFor="let app of filteredAppointments" (click)="openPopup(app)">
+```
+
+### Edit Appointment Modal
+
+The edit modal (`src/app/appointment/appointment.html:68-114`) provides:
+
+<CardGroup cols={2}>
+  <Card title="Appointment Summary" icon="info-circle">
+    Read-only display of patient name and treatment type
+  </Card>
+  <Card title="Time Editor" icon="clock">
+    Time input for modifying appointment start time
+  </Card>
+  <Card title="Attendance Radio" icon="check-circle">
+    Radio buttons for attendance status: Sí, No, Pendiente
+  </Card>
+  <Card title="Action Buttons" icon="tools">
+    Save, Complete, and Delete buttons
+  </Card>
+</CardGroup>
+
+<CodeGroup>
+
+```html Edit Modal
+<div class="modal-overlay" *ngIf="isPopupOpen" (click)="closePopup()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Editar Cita</h3>
+      <button class="close-btn" (click)="closePopup()">&times;</button>
+    </div>
+    <div class="modal-body" *ngIf="selectedAppointment">
+      <div class="appointment-summary">
+        <p><strong>Paciente:</strong> {{ selectedAppointment.paciente }}</p>
+        <p><strong>Tratamiento:</strong> {{ selectedAppointment.tratamiento }}</p>
+      </div>
+
+      <div class="form-group">
+        <label>Hora de inicio:</label>
+        <input type="time" [(ngModel)]="newTime">
+      </div>
+
+      <div class="form-group">
+        <label>¿Ha asistido?</label>
+        <div class="radio-group">
+          <label class="radio-item">
+            <input type="radio" name="asistencia" value="sí" [(ngModel)]="asistencia">
+            <span>Sí</span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="asistencia" value="no" [(ngModel)]="asistencia">
+            <span>No</span>
+          </label>
+          <label class="radio-item">
+            <input type="radio" name="asistencia" value="pendiente" [(ngModel)]="asistencia">
+            <span>Pendiente</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="actions-group">
+        <button class="btn-primary" (click)="saveChanges()">Guardar Cambios</button>
+        <button class="btn-complete" (click)="updateStatus('completada')">
+          <i class="fa-solid fa-check"></i> Marcar como Completada
+        </button>
+        <button class="btn-delete" (click)="markAsAbsent()">
+          <i class="fa-solid fa-trash"></i> Eliminar cita
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+</CodeGroup>
+
+## AppointmentData Interface
+
+The component works with the `AppointmentData` interface:
+
+<CodeGroup>
+
+```typescript appointment.service.ts
+export interface AppointmentData {
+  id: number;
+  fecha: string;
+  hora: string;
+  paciente: string;
+  tratamiento: string;
+  doctor: string;
+  duracion: string;
+  estado: 'confirmada' | 'pendiente' | 'completada';
+  asistido: 'sí' | 'no' | 'pendiente';
+}
+```
+
+</CodeGroup>
+
+## Service Integration
+
+The component uses `AppointmentService` for all data operations:
+
+<ParamField path="getAppointments()" type="() => AppointmentData[]">
+  Retrieves all appointments
+</ParamField>
+
+<ParamField path="updateAppointmentStatus()" type="(id: number, status: string) => void">
+  Updates an appointment's status
+</ParamField>
+
+<ParamField path="updateAppointmentTime()" type="(id: number, time: string) => void">
+  Updates an appointment's start time
+</ParamField>
+
+<ParamField path="updateAppointmentAttendance()" type="(id: number, attendance: string) => void">
+  Updates an appointment's attendance status
+</ParamField>
+
+<ParamField path="deleteAppointment()" type="(id: number) => void">
+  Deletes an appointment
+</ParamField>
+
+## Status Badge Styling
+
+The status badge uses dynamic CSS classes:
+
+```html
+<span class="status-badge" [ngClass]="app.estado">
+  {{ app.estado }}
+</span>
+```
+
+**Status Values**:
+- `confirmada`: Confirmed appointment (green)
+- `pendiente`: Pending appointment (yellow)
+- `completada`: Completed appointment (blue)
+
+## Usage Example
+
+The Appointment component is used as a routed component:
+
+<CodeGroup>
+
+```typescript app.routes.ts
+import { Routes } from '@angular/router';
+import { Appointment } from './appointment/appointment';
+
+export const routes: Routes = [
+  {
+    path: 'citas',
+    component: Appointment,
+    data: { title: 'Citas' }
+  }
+];
+```
+
+</CodeGroup>
+
+## Event Flow
+
+<Steps>
+  <Step title="User Clicks Row">
+    Clicking an appointment row triggers `openPopup(appointment)`
+  </Step>
+  <Step title="Modal Opens">
+    Edit modal displays with appointment data loaded into form fields
+  </Step>
+  <Step title="User Edits">
+    User modifies time, attendance status, or other fields
+  </Step>
+  <Step title="User Saves">
+    Clicking "Guardar Cambios" calls `saveChanges()`
+  </Step>
+  <Step title="Service Updates">
+    Service methods update the appointment data
+  </Step>
+  <Step title="Reload Data">
+    `loadAppointments()` refreshes the table
+  </Step>
+  <Step title="Modal Closes">
+    `closePopup()` dismisses the modal
+  </Step>
+</Steps>
+
+## Customization
+
+### Add More Filters
+
+Add additional filter options:
+
+```typescript
+setFilter(filter: string): void {
+  this.currentFilter = filter;
+}
+
+// In template:
+<button *ngFor="let filter of ['Todas', 'Hoy', 'Esta Semana', 'Este Mes']"
+  [class.active]="currentFilter === filter" 
+  (click)="setFilter(filter)">
+  {{ filter }}
+</button>
+```
+
+### Add Bulk Actions
+
+Implement selection and bulk operations:
+
+```typescript
+selectedIds: Set<number> = new Set();
+
+toggleSelection(id: number): void {
+  if (this.selectedIds.has(id)) {
+    this.selectedIds.delete(id);
+  } else {
+    this.selectedIds.add(id);
+  }
+}
+
+bulkConfirm(): void {
+  this.selectedIds.forEach(id => {
+    this.appointmentService.updateAppointmentStatus(id, 'confirmada');
+  });
+  this.loadAppointments();
+  this.selectedIds.clear();
+}
+```
+
+### Add Date Range Filter
+
+Filter appointments by date range:
+
+```typescript
+startDate: string = '';
+endDate: string = '';
+
+get filteredAppointments(): AppointmentData[] {
+  let filtered = this.appointments;
+  
+  // Existing filters...
+  
+  // Date range filter
+  if (this.startDate && this.endDate) {
+    filtered = filtered.filter(a => {
+      const appointmentDate = new Date(a.fecha);
+      return appointmentDate >= new Date(this.startDate) && 
+             appointmentDate <= new Date(this.endDate);
+    });
+  }
+  
+  return filtered;
+}
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="Calendar View" icon="calendar" href="/components/calendar-view">
+    Weekly calendar visualization
+  </Card>
+  <Card title="Appointment Service" icon="database" href="/api/appointment-service">
+    Service for appointment data management
+  </Card>
+  <Card title="Patient List" icon="users" href="/components/patient-list">
+    Patient listing and search component
+  </Card>
+  <Card title="Appointment Scheduling" icon="calendar-check" href="/features/appointment-scheduling">
+    Appointment scheduling feature documentation
+  </Card>
+</CardGroup>

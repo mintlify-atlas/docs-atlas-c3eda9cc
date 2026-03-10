@@ -1,0 +1,155 @@
+---
+title: Testing
+description: Learn how to write and run tests for the Odontologia Frontend project
+---
+
+## Testing Framework
+
+This project uses **Vitest** as the testing framework. Vitest is a fast, modern test runner designed for Vite-based projects and works seamlessly with Angular 21.
+
+## Running Tests
+
+### Run All Tests
+
+Execute all unit tests:
+
+```bash
+npm test
+```
+
+Or using Angular CLI:
+
+```bash
+ng test
+```
+
+### Watch Mode
+
+Vitest runs in watch mode by default, automatically re-running tests when files change.
+
+## Test Configuration
+
+### TypeScript Configuration
+
+The project includes a dedicated TypeScript configuration for tests (`tsconfig.spec.json`):
+
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "types": ["vitest/globals"]
+  },
+  "include": [
+    "src/**/*.d.ts",
+    "src/**/*.spec.ts"
+  ]
+}
+```
+
+### Test File Location
+
+Test files should be placed alongside the code they test with the `.spec.ts` extension:
+
+```
+src/
+├── app/
+│   ├── component.ts
+│   └── component.spec.ts
+```
+
+## Writing Tests
+
+### Component Tests
+
+Example of a basic Angular component test:
+
+```typescript
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MyComponent } from './my-component';
+
+describe('MyComponent', () => {
+  let component: MyComponent;
+  let fixture: ComponentFixture<MyComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(MyComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+```
+
+### Service Tests
+
+Example of testing an Angular service:
+
+```typescript
+import { TestBed } from '@angular/core/testing';
+import { MyService } from './my.service';
+
+describe('MyService', () => {
+  let service: MyService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(MyService);
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+});
+```
+
+## Test Dependencies
+
+The project includes these testing dependencies:
+
+- **vitest**: ^4.0.8 - Modern test runner
+- **jsdom**: ^27.1.0 - DOM implementation for testing
+- **@angular/build**: Test utilities built into Angular CLI
+
+## Global Test Types
+
+Vitest globals are available in all test files:
+
+- `describe()` - Group related tests
+- `it()` / `test()` - Define individual tests
+- `expect()` - Make assertions
+- `beforeEach()` / `afterEach()` - Setup and teardown
+- `beforeAll()` / `afterAll()` - One-time setup and teardown
+
+## Best Practices
+
+1. **Test File Naming**: Use `.spec.ts` suffix for test files
+2. **Test Organization**: Keep tests close to the code they test
+3. **Test Isolation**: Each test should be independent
+4. **Descriptive Names**: Use clear, descriptive test names
+5. **Arrange-Act-Assert**: Structure tests with setup, execution, and assertion
+
+## Coverage
+
+Vitest can generate code coverage reports. The test configuration includes coverage settings through the Angular build system.
+
+## Debugging Tests
+
+To debug tests in VS Code:
+
+1. Set breakpoints in your test files
+2. Use the built-in Vitest debugging capabilities
+3. Run tests with the debugger attached
+
+## Next Steps
+
+- Learn about the [Build Process](/development/building)
+- Explore [SSR Configuration](/development/ssr)
+- Review [Code Style Guidelines](/contributing/code-style)

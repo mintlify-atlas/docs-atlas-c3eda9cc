@@ -1,0 +1,380 @@
+---
+title: 'Patient Management'
+description: 'Comprehensive patient record management system for dental clinics'
+icon: 'users'
+---
+
+## Overview
+
+The Patient Management system provides a complete solution for managing patient records, including personal information, medical history, appointments, and treatments. The system features advanced search capabilities and detailed patient profiles.
+
+## Patient Data Model
+
+Patient records are defined by the `PatientData` interface in `src/app/services/patient.service.ts`:
+
+```typescript
+export interface PatientData {
+  id: number;
+  nombre: string;
+  edad: number;
+  phone: string;
+  email: string;
+  address: string;
+  medication_allergies: string;
+  billing_data: string;
+  health_status: string;
+  family_history: string;
+  ultimaVisita: string;
+  proximaCita: string;
+  estado: string;
+  citas: Cita[];
+  tratamientos: Tratamiento[];
+}
+```
+
+### Related Interfaces
+
+**Cita (Appointment)**
+```typescript
+export interface Cita {
+  titulo: string;
+  fecha: string;
+  hora: string;
+  doctor: string;
+  estado: string;
+}
+```
+
+**Tratamiento (Treatment)**
+```typescript
+export interface Tratamiento {
+  titulo: string;
+  precio: number;
+  fecha: string;
+  doctor: string;
+  descripcion: string;
+}
+```
+
+## Patient Service
+
+The `PatientService` provides all patient-related data operations:
+
+### Location
+`src/app/services/patient.service.ts`
+
+### Available Methods
+
+<CardGroup cols={2}>
+  <Card title="getPatients()" icon="list">
+    Returns all patient records
+  </Card>
+  <Card title="getPatientById(id)" icon="user">
+    Retrieves a specific patient by ID
+  </Card>
+  <Card title="addPatient(patient)" icon="plus">
+    Adds a new patient to the system
+  </Card>
+</CardGroup>
+
+### Service Implementation
+
+```typescript
+@Injectable({
+  providedIn: 'root'
+})
+export class PatientService {
+  private patients: PatientData[] = [...];
+
+  getPatients(): PatientData[] {
+    return this.patients;
+  }
+
+  getPatientById(id: number): PatientData | undefined {
+    return this.patients.find(p => p.id === id);
+  }
+
+  addPatient(patient: any): void {
+    const newPatient: PatientData = {
+      ...patient,
+      id: this.patients.length + 1,
+      nombre: `${patient.first_name} ${patient.last_name}`,
+      ultimaVisita: '-',
+      proximaCita: '-',
+      estado: 'activo',
+      citas: [],
+      tratamientos: [],
+      // ... other fields
+    };
+    this.patients.push(newPatient);
+  }
+}
+```
+
+## Patient List Component
+
+The main patient list is managed by the `Patient` component located at `src/app/patient/patient.ts`:
+
+### Component Structure
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { PatientService, PatientData } from '../services/patient.service';
+
+@Component({
+  selector: 'app-patient',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule, NewAppointment],
+  templateUrl: './patient.html',
+  styleUrl: './patient.css',
+})
+export class Patient implements OnInit {
+  searchText: string = '';
+  patients: PatientData[] = [];
+  isNewAppointmentModalOpen: boolean = false;
+
+  constructor(private patientService: PatientService) { }
+
+  ngOnInit(): void {
+    this.patients = this.patientService.getPatients();
+  }
+}
+```
+
+### Search Functionality
+
+The component includes a powerful search feature that filters patients by name, email, or phone:
+
+```typescript
+get filteredPatients() {
+  if (!this.searchText) {
+    return this.patients;
+  }
+  const search = this.searchText.toLowerCase();
+  return this.patients.filter(p =>
+    (p.nombre?.toLowerCase().includes(search) || false) ||
+    (p.email?.toLowerCase().includes(search) || false) ||
+    (p.phone?.includes(search) || false)
+  );
+}
+```
+
+<Note>
+  The search is case-insensitive and searches across multiple fields simultaneously, providing flexible patient lookup.
+</Note>
+
+## Adding New Patients
+
+New patients are added through the `NewPatient` component at `src/app/new-patient/new-patient.ts`:
+
+### Form Structure
+
+```typescript
+export class NewPatient implements OnInit {
+  patientForm!: FormGroup;
+
+  ngOnInit(): void {
+    this.initForm();
+  }
+
+  initForm(): void {
+    const today = new Date().toISOString().split('T')[0];
+
+    this.patientForm = this.fb.group({
+      first_name: ['', [Validators.required, Validators.minLength(2)]],
+      last_name: ['', [Validators.required, Validators.minLength(2)]],
+      national_id: ['', [Validators.required]],
+      social_security_number: [''],
+      phone: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email]],
+      address: ['', [Validators.required]],
+      billing_data: [''],
+      health_status: [''],
+      family_history: [''],
+      lifestyle_habits: [''],
+      medication_allergies: [''],
+      registration_date: [today]
+    });
+  }
+}
+```
+
+### Form Validation
+
+The new patient form includes comprehensive validation:
+
+<Steps>
+  <Step title="Required Fields">
+    First name, last name, national ID, phone, email, and address are mandatory
+  </Step>
+  <Step title="Field Length">
+    Name fields require minimum 2 characters
+  </Step>
+  <Step title="Email Format">
+    Email field validates proper email format
+  </Step>
+  <Step title="Visual Feedback">
+    Invalid fields are highlighted after user interaction
+  </Step>
+</Steps>
+
+### Submitting the Form
+
+```typescript
+onSubmit(): void {
+  if (this.patientForm.valid) {
+    this.patientService.addPatient(this.patientForm.value);
+    this.router.navigate(['/patient']);
+  } else {
+    this.markFormGroupTouched(this.patientForm);
+  }
+}
+```
+
+## Patient States
+
+Patients can have different states indicating their current status:
+
+| Estado | Description |
+|--------|-------------|
+| activo | Regular active patient |
+| pendiente | Pending follow-up or documentation |
+| urgente | Requires urgent attention |
+
+## Sample Patient Data
+
+Here's an example of a complete patient record:
+
+```typescript
+{
+  id: 1,
+  nombre: 'Juan Pérez',
+  edad: 45,
+  phone: '600 123 456',
+  email: 'juan.perez@email.com',
+  address: 'Calle Mayor 123, Madrid',
+  medication_allergies: 'Penicilina',
+  billing_data: 'Sanitas - 123456789',
+  health_status: 'Estable. Requiere limpieza profunda.',
+  family_history: 'Diabetes tipo 2 (Padre)',
+  ultimaVisita: '15/02/2026',
+  proximaCita: '22/03/2026',
+  estado: 'activo',
+  citas: [
+    { 
+      titulo: 'Limpieza profunda', 
+      fecha: '22/03/2026', 
+      hora: '10:00', 
+      doctor: 'Dr. Rodríguez', 
+      estado: 'confirmada' 
+    }
+  ],
+  tratamientos: [
+    { 
+      titulo: 'Extracción muela', 
+      precio: 120, 
+      fecha: '15/02/2026', 
+      doctor: 'Dr. Rodríguez', 
+      descripcion: 'Extracción sin complicaciones.' 
+    }
+  ]
+}
+```
+
+## Appointment Integration
+
+The patient list includes quick access to appointment scheduling:
+
+```typescript
+openNewAppointmentModal(): void {
+  this.isNewAppointmentModalOpen = true;
+}
+
+closeNewAppointmentModal(): void {
+  this.isNewAppointmentModalOpen = false;
+}
+```
+
+## Routing
+
+Patient-related routes are defined in `src/app/app.routes.ts`:
+
+```typescript
+{ path: 'patient', component: Patient, data: { title: 'Listado de Pacientes' } },
+{ path: 'patient/new', component: NewPatient, data: { title: 'Nuevo Paciente' } },
+{ path: 'patient/:id', component: PacienteDetail, data: { title: 'Detalle de Paciente' } },
+```
+
+## Usage Examples
+
+### Retrieving All Patients
+
+```typescript
+import { PatientService } from './services/patient.service';
+
+constructor(private patientService: PatientService) {}
+
+ngOnInit() {
+  const allPatients = this.patientService.getPatients();
+  console.log(`Total patients: ${allPatients.length}`);
+}
+```
+
+### Finding a Specific Patient
+
+```typescript
+const patient = this.patientService.getPatientById(1);
+if (patient) {
+  console.log(`Patient: ${patient.nombre}`);
+  console.log(`Next appointment: ${patient.proximaCita}`);
+}
+```
+
+### Creating a New Patient
+
+```typescript
+const newPatientData = {
+  first_name: 'María',
+  last_name: 'González',
+  national_id: '12345678A',
+  phone: '600 111 222',
+  email: 'maria.gonzalez@email.com',
+  address: 'Calle Ejemplo 45',
+  edad: 35
+};
+
+this.patientService.addPatient(newPatientData);
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Data Validation" icon="shield-check">
+    Always validate patient data before submission to ensure data integrity
+  </Card>
+  <Card title="Search Performance" icon="magnifying-glass">
+    Use the computed `filteredPatients` property for efficient search operations
+  </Card>
+  <Card title="Error Handling" icon="triangle-exclamation">
+    Implement proper error handling for failed operations
+  </Card>
+  <Card title="Data Privacy" icon="lock">
+    Ensure sensitive patient data is properly protected and access-controlled
+  </Card>
+</CardGroup>
+
+## Future Enhancements
+
+- Patient photo upload
+- Document attachment system
+- Patient communication history
+- Insurance integration
+- Advanced filtering and sorting
+- Export patient data to PDF
+- Patient portal for self-service
+
+## Related Features
+
+- [Appointment Scheduling](/features/appointment-scheduling) - Manage patient appointments
+- [Treatment Tracking](/features/treatment-tracking) - Track patient treatments
+- [Calendar](/features/calendar) - View patient appointments in calendar format

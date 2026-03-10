@@ -1,0 +1,309 @@
+---
+title: 'TreatmentService'
+description: 'Service for managing dental treatments, pricing, and treatment catalog'
+---
+
+## Overview
+
+The `TreatmentService` is an Angular injectable service that manages the catalog of available dental treatments including their descriptions, pricing, duration, and categories.
+
+## Interface
+
+### Tratamiento
+
+Represents a treatment offering in the dental clinic.
+
+```typescript
+export interface Tratamiento {
+  id: number;
+  nombre: string;
+  categoria: string;
+  descripcion: string;
+  duracion: number;
+  precio: number;
+}
+```
+
+<ResponseField name="id" type="number" required>
+  Unique identifier for the treatment
+</ResponseField>
+
+<ResponseField name="nombre" type="string" required>
+  Name of the treatment
+</ResponseField>
+
+<ResponseField name="categoria" type="string" required>
+  Category of the treatment (e.g., 'Preventiva', 'Cirugía', 'Estética', 'Ortodoncia')
+</ResponseField>
+
+<ResponseField name="descripcion" type="string" required>
+  Detailed description of the treatment
+</ResponseField>
+
+<ResponseField name="duracion" type="number" required>
+  Duration of the treatment in minutes
+</ResponseField>
+
+<ResponseField name="precio" type="number" required>
+  Price of the treatment in the local currency
+</ResponseField>
+
+## Methods
+
+### getTratamientos()
+
+Retrieves all available treatments.
+
+```typescript
+getTratamientos(): Tratamiento[]
+```
+
+<ResponseField name="return" type="Tratamiento[]">
+  Array containing all treatment records
+</ResponseField>
+
+<CodeGroup>
+```typescript Basic Usage
+import { TreatmentService } from './services/treatment.service';
+
+export class TreatmentListComponent {
+  constructor(private treatmentService: TreatmentService) {}
+
+  loadTreatments() {
+    const treatments = this.treatmentService.getTratamientos();
+    console.log(`Available treatments: ${treatments.length}`);
+  }
+}
+```
+
+```typescript Filter by Category
+const allTreatments = this.treatmentService.getTratamientos();
+const surgicalTreatments = allTreatments.filter(
+  t => t.categoria === 'Cirugía'
+);
+```
+
+```typescript Sort by Price
+const treatments = this.treatmentService.getTratamientos()
+  .sort((a, b) => a.precio - b.precio);
+```
+
+```typescript Get Treatment Statistics
+const treatments = this.treatmentService.getTratamientos();
+const averagePrice = treatments.reduce((sum, t) => sum + t.precio, 0) / treatments.length;
+const categories = [...new Set(treatments.map(t => t.categoria))];
+```
+</CodeGroup>
+
+### addTratamiento()
+
+Adds a new treatment to the catalog.
+
+```typescript
+addTratamiento(tratamiento: Omit<Tratamiento, 'id'>): Tratamiento
+```
+
+<ParamField path="tratamiento" type="object" required>
+  Treatment data object with the following properties:
+  - `nombre` (string): Name of the treatment
+  - `categoria` (string): Treatment category
+  - `descripcion` (string): Treatment description
+  - `duracion` (number): Duration in minutes
+  - `precio` (number): Price of the treatment
+</ParamField>
+
+<ResponseField name="return" type="Tratamiento">
+  The newly created treatment object with assigned ID
+</ResponseField>
+
+<CodeGroup>
+```typescript Basic Usage
+const newTreatment = {
+  nombre: 'Endodoncia',
+  categoria: 'Cirugía',
+  descripcion: 'Tratamiento del conducto radicular',
+  duracion: 90,
+  precio: 300
+};
+
+const created = this.treatmentService.addTratamiento(newTreatment);
+console.log(`Created treatment with ID: ${created.id}`);
+```
+
+```typescript From Form Data
+onSubmitTreatmentForm(formData: any) {
+  const treatmentData = {
+    nombre: formData.name,
+    categoria: formData.category,
+    descripcion: formData.description,
+    duracion: parseInt(formData.duration),
+    precio: parseFloat(formData.price)
+  };
+  
+  const newTreatment = this.treatmentService.addTratamiento(treatmentData);
+  this.showSuccess(`Treatment "${newTreatment.nombre}" added successfully`);
+  this.router.navigate(['/treatments']);
+}
+```
+
+```typescript With Validation
+addNewTreatment(data: any) {
+  if (data.precio < 0) {
+    this.showError('Price must be positive');
+    return;
+  }
+  
+  if (data.duracion <= 0) {
+    this.showError('Duration must be greater than 0');
+    return;
+  }
+  
+  const treatment = this.treatmentService.addTratamiento(data);
+  this.refreshTreatmentList();
+}
+```
+</CodeGroup>
+
+### updateTratamiento()
+
+Updates an existing treatment in the catalog.
+
+```typescript
+updateTratamiento(tratamiento: Tratamiento): void
+```
+
+<ParamField path="tratamiento" type="Tratamiento" required>
+  Complete treatment object including the ID to update
+</ParamField>
+
+<CodeGroup>
+```typescript Basic Usage
+const updatedTreatment: Tratamiento = {
+  id: 1,
+  nombre: 'Limpieza dental profunda',
+  categoria: 'Preventiva',
+  descripcion: 'Limpieza profesional completa con pulido',
+  duracion: 60,
+  precio: 90
+};
+
+this.treatmentService.updateTratamiento(updatedTreatment);
+```
+
+```typescript Update Price Only
+const treatment = this.treatmentService.getTratamientos()
+  .find(t => t.id === 3);
+
+if (treatment) {
+  treatment.precio = 220;
+  this.treatmentService.updateTratamiento(treatment);
+}
+```
+
+```typescript From Edit Form
+onUpdateTreatment(treatmentId: number, formData: any) {
+  const updatedTreatment: Tratamiento = {
+    id: treatmentId,
+    nombre: formData.name,
+    categoria: formData.category,
+    descripcion: formData.description,
+    duracion: formData.duration,
+    precio: formData.price
+  };
+  
+  this.treatmentService.updateTratamiento(updatedTreatment);
+  this.showSuccess('Treatment updated successfully');
+}
+```
+</CodeGroup>
+
+### deleteTratamiento()
+
+Removes a treatment from the catalog.
+
+```typescript
+deleteTratamiento(id: number): void
+```
+
+<ParamField path="id" type="number" required>
+  The unique identifier of the treatment to delete
+</ParamField>
+
+<CodeGroup>
+```typescript Basic Usage
+this.treatmentService.deleteTratamiento(5);
+```
+
+```typescript With Confirmation
+removeTreatment(treatmentId: number, treatmentName: string) {
+  if (confirm(`Are you sure you want to delete "${treatmentName}"?`)) {
+    this.treatmentService.deleteTratamiento(treatmentId);
+    this.showSuccess('Treatment deleted');
+    this.refreshTreatments();
+  }
+}
+```
+
+```typescript Bulk Delete
+deleteMultipleTreatments(treatmentIds: number[]) {
+  treatmentIds.forEach(id => {
+    this.treatmentService.deleteTratamiento(id);
+  });
+  this.showSuccess(`${treatmentIds.length} treatments deleted`);
+}
+```
+</CodeGroup>
+
+## Usage Example
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { TreatmentService, Tratamiento } from './services/treatment.service';
+
+@Component({
+  selector: 'app-treatment-catalog',
+  templateUrl: './treatment-catalog.component.html'
+})
+export class TreatmentCatalogComponent implements OnInit {
+  treatments: Tratamiento[] = [];
+  categories: string[] = [];
+  selectedCategory: string = 'all';
+
+  constructor(private treatmentService: TreatmentService) {}
+
+  ngOnInit() {
+    this.loadTreatments();
+  }
+
+  loadTreatments() {
+    this.treatments = this.treatmentService.getTratamientos();
+    this.categories = [...new Set(this.treatments.map(t => t.categoria))];
+  }
+
+  getFilteredTreatments(): Tratamiento[] {
+    if (this.selectedCategory === 'all') {
+      return this.treatments;
+    }
+    return this.treatments.filter(t => t.categoria === this.selectedCategory);
+  }
+
+  addTreatment(treatmentData: Omit<Tratamiento, 'id'>) {
+    const newTreatment = this.treatmentService.addTratamiento(treatmentData);
+    this.loadTreatments();
+    return newTreatment;
+  }
+
+  updateTreatmentPrice(id: number, newPrice: number) {
+    const treatment = this.treatments.find(t => t.id === id);
+    if (treatment) {
+      treatment.precio = newPrice;
+      this.treatmentService.updateTratamiento(treatment);
+    }
+  }
+
+  removeTreatment(id: number) {
+    this.treatmentService.deleteTratamiento(id);
+    this.loadTreatments();
+  }
+}
+```
