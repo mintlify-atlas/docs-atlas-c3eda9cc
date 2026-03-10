@@ -1,0 +1,121 @@
+{
+  "projectType": "frontend",
+  "projectName": "Odontología Frontend",
+  "projectDescription": "Angular application for dental clinic management with patient records, appointments, and treatment tracking",
+  "theme": "palm",
+  "primaryColor": "#22f48d",
+  "lightColor": "#55fb8b",
+  "darkColor": "#c9fcd1",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/architecture",
+              "concepts/routing",
+              "concepts/state-management"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/authentication",
+              "features/patient-management",
+              "features/appointment-scheduling",
+              "features/treatment-tracking",
+              "features/calendar"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "components/overview",
+              "components/header",
+              "components/menu",
+              "components/patient-list",
+              "components/appointment-view",
+              "components/calendar-view"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Services",
+            "pages": [
+              "api/patient-service",
+              "api/appointment-service",
+              "api/treatment-service",
+              "api/auth-service"
+            ]
+          },
+          {
+            "group": "Models",
+            "pages": [
+              "api/patient-data",
+              "api/appointment-data",
+              "api/treatment-data"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Guides",
+            "pages": [
+              "development/setup",
+              "development/testing",
+              "development/building",
+              "development/ssr"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "contributing/guidelines",
+              "contributing/code-style"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Patient Management",
+    "Appointment Scheduling",
+    "Treatment Tracking",
+    "Calendar View",
+    "Authentication System",
+    "Server-Side Rendering (SSR)",
+    "Responsive Design",
+    "Real-time Updates"
+  ],
+  "publicApiSurface": [
+    "PatientService.getPatients()",
+    "PatientService.getPatientById(id)",
+    "PatientService.addPatient(patient)",
+    "AppointmentService.getAppointments()",
+    "AppointmentService.addAppointment(data)",
+    "AppointmentService.updateAppointmentStatus(id, status)",
+    "AppointmentService.updateAppointmentAttendance(id, asistido)",
+    "TreatmentService.getTratamientos()",
+    "TreatmentService.addTratamiento(tratamiento)",
+    "TreatmentService.updateTratamiento(tratamiento)",
+    "TreatmentService.deleteTratamiento(id)"
+  ]
+}
